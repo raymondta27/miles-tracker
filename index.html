@@ -40,10 +40,23 @@ textarea{font-family:monospace;font-size:12px}details summary{cursor:pointer;col
 .why{font-size:12px;margin-top:2px;color:#475467}.why.red{color:#b42318}.why.amber{color:#b54708}
 .split{background:#ecfdf3;border:1px solid #6ce9a6;border-radius:10px;padding:8px 10px;margin:6px 0}.split .kv{font-size:13px}
 .seg.small button{font-size:12px;padding:8px 4px}
+.paidby{margin:0 0 8px}.paidby>small{font-size:11px;color:#667;display:block;margin-bottom:3px}
+.seg4 button{font-size:11.5px;padding:8px 2px}
+.card.nc{background:#f6f7f9}.tog.repeat{font-size:13px}
+.erow{margin:8px 0}.ehead{display:flex;justify-content:space-between;font-size:13.5px;gap:8px}.ehead small{color:#667}
+.bar.thin{height:7px}.bar i.blue{background:#2e6be6}.bar i.grey{background:#98a2b3}
+.right{text-align:right}.up{color:#d92d20}.down{color:#12b76a}.red{color:#d92d20}
+input.bud{width:96px;text-align:right;padding:6px 8px}
+.trend{display:flex;gap:6px;align-items:flex-end;height:130px;padding-top:6px}
+.tcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:#667}
+.tcol i{display:block;width:70%;background:#c7d7fe;border-radius:5px 5px 0 0;min-height:2px}.tcol.on i{background:#0b3d91}.tcol.on span{color:#0b3d91;font-weight:700}
+.tcol small{font-size:10px;margin-bottom:2px}
+nav button{font-size:10.5px}
+.green{color:#12b76a}
 </style></head><body>
 <header><div><h1>✈️ SG Miles Tracker</h1><small>Raymond's card optimiser · data checked 8 Oct 2026</small></div></header>
 <main id="main"></main><div id="toast"></div>
-<nav><button data-v="add" onclick="setView('add')"><b>➕</b>Add</button><button data-v="month" onclick="setView('month')"><b>📅</b>Month</button><button data-v="best" onclick="setView('best')"><b>🏆</b>Best card</button><button data-v="cards" onclick="setView('cards')"><b>💳</b>Cards</button><button data-v="data" onclick="setView('data')"><b>💾</b>Data</button></nav>
+<nav><button data-v="add" onclick="setView('add')"><b>➕</b>Add</button><button data-v="month" onclick="setView('month')"><b>📅</b>Miles</button><button data-v="exp" onclick="setView('exp')"><b>📊</b>Expenses</button><button data-v="best" onclick="setView('best')"><b>🏆</b>Best</button><button data-v="cards" onclick="setView('cards')"><b>💳</b>Cards</button><button data-v="data" onclick="setView('data')"><b>💾</b>Data</button></nav>
 <script>/* ===== Miles engine (pure logic, no DOM) ===== */
 const CHECKED = '2026-10-08';
 const CATS = [
@@ -57,8 +70,18 @@ const CATS = [
   {id:'bills',short:'Bills',name:'Bills / utilities',icon:'🧾',ch:'online'},
   {id:'insurance',short:'Insurance',name:'Insurance',icon:'☂️',ch:'online'},
   {id:'entertainment',short:'Entertainment',name:'Entertainment',icon:'🎬',ch:'online'},
-  {id:'others',short:'Others',name:'Others',icon:'•',ch:'instore'}
+  {id:'others',short:'Others',name:'Others',icon:'•',ch:'instore'},
+  {id:'rent',short:'Rent',name:'Rent / housing',icon:'🏠',ch:'online',nc:true},
+  {id:'loan',short:'Loan',name:'Loan repayment',icon:'🏦',ch:'online',nc:true},
+  {id:'family',short:'Family',name:'Family / allowance',icon:'👪',ch:'online',nc:true},
+  {id:'savings',short:'Savings',name:'Transfers to savings / investments',icon:'💰',ch:'online',nc:true},
+  {id:'tax',short:'Tax',name:'Tax',icon:'🏛️',ch:'online',nc:true}
 ];
+/* Payment sources. 'card' = one of the credit cards; the rest earn 0 miles and never touch caps/min spend/recommendations */
+const SOURCES=[{id:'card',name:'Card',icon:'💳'},{id:'bank',name:'Bank transfer',icon:'🏦'},{id:'paynow',name:'PayNow',icon:'⚡'},{id:'cash',name:'Cash',icon:'💵'}];
+const SRC=Object.fromEntries(SOURCES.map(x=>[x.id,x]));
+const NOBONUS_CATS=['rent','loan','family','savings','tax'];
+function isCardTx(t){ return (t.src||'card')==='card'; }
 const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const ML = 'https://milelion.com';
 const FASTFOOD='mcdonald|kfc|burger king|starbucks|ya kun|toast box|subway|jollibee|popeyes|mos burger|long john|texas chicken|grabfood|foodpanda|deliveroo|food delivery';
@@ -181,6 +204,7 @@ function ruleCheck(rule,card,tx){
   const cats=ruleCats(rule,card);
   if(rule.merchant){ let m=false; try{m=new RegExp(rule.merchant,'i').test(tx.merchant||'');}catch(e){} if(!m) return no('merchant-specific',false); }
   else if(cats!=='all' && !cats.includes(cat)) return no('no bonus for this category',false);
+  if(NOBONUS_CATS.includes(cat)) return no('rent/loan/tax/transfer-type payments usually get no bonus (often excluded MCCs)',false);
   if((cat==='bills'||cat==='insurance') && !rule.allowBills) return no(cat==='bills'?'bills/utilities get no bonus':'insurance gets no bonus',false);
   if(rule.excl && rule.excl.includes(cat)) return no((rule.exclWhy||{})[cat]||'category excluded');
   if(rule.until && tx.date>rule.until) return no('promo ended');
@@ -252,7 +276,7 @@ function allocate(card,tx,usage,cards,minOK){
 /* spend totals for min-spend: card-level (all spend on card in cycle) and pool-level (spend matching rules of that pool) */
 function spendTotals(state,excludeId){
   const T={};
-  for(const tx of state.txs){ if(tx.id===excludeId) continue; const card=state.cards.find(c=>c.id===tx.card); if(!card) continue;
+  for(const tx of state.txs){ if(tx.id===excludeId || !isCardTx(tx)) continue; const card=state.cards.find(c=>c.id===tx.card); if(!card) continue;
     const k='card:'+card.id+'|'+cycleStart(card,tx.date); T[k]=(T[k]||0)+(+tx.amount);
     const P=allPools(state.cards);
     const seen=new Set();
@@ -270,6 +294,7 @@ function evalLedger(state){
   const usage={}; const res={};
   const txs=[...state.txs].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.ts||0)-(b.ts||0));
   for(const tx of txs){
+    if(!isCardTx(tx)){ res[tx.id]={miles:0,parts:[],nonCard:true,missed:0,optimal:null,optimalMiles:0}; continue; }
     const card=state.cards.find(c=>c.id===tx.card);
     if(!card){res[tx.id]={miles:0,parts:[],err:'Card not found'};continue;}
     const r=allocate(card,tx,usage,state.cards,minActual);
@@ -350,7 +375,7 @@ function cardMinStatus(state,refDate){ const L=evalLedger(state);
 /* Cheat sheet: best card for each category and channel, S$100 purchase, given current caps */
 function cheatSheet(state,date,amount){
   amount=amount||100; const rows=[];
-  for(const cat of CATS){
+  for(const cat of CATS.filter(c=>!c.nc)){
     const row={cat,ch:{}};
     for(const ch of ['online','instore']){
       const draft={amount,cat:cat.id,channel:ch,wallet:true,fcy:cat.id==='fcy',merchant:'',date};
@@ -362,7 +387,78 @@ function cheatSheet(state,date,amount){
 }
 function fmt(n){return (Math.round(n*100)/100).toLocaleString('en-SG',{maximumFractionDigits:2});}
 
-if(typeof module!=='undefined'&&module.exports) module.exports={setKfMode,CATS,DEFAULT_CARDS,cycleStart,cycleEnd,allocate,evalLedger,recommend,poolStatus,cheatSheet,cardMinStatus,ruleMatches};
+
+/* ===== Data model migration (in place, idempotent) ===== */
+const DATA_VERSION=3;
+function migrateState(s){
+  s.txs=Array.isArray(s.txs)?s.txs:[];
+  for(const t of s.txs){
+    if(!t.src) t.src='card';
+    if(t.src!=='card'){ t.card=null; }
+    if(t.channel==='instore' && !t.pay && t.src==='card') t.pay=(t.wallet===false?'tap':'wallet');
+    t.amount=+t.amount||0;
+  }
+  s.settings=s.settings||{};
+  if(s.settings.kf===undefined) s.settings.kf=true;
+  if(!Array.isArray(s.settings.excludeCats)) s.settings.excludeCats=['savings'];
+  if(!s.settings.budgets||typeof s.settings.budgets!=='object') s.settings.budgets={};
+  if(!Array.isArray(s.recurring)) s.recurring=[];
+  s.version=DATA_VERSION;
+  return s;
+}
+
+/* ===== Recurring monthly entries ===== */
+function ymAdd(ym,k){ let [y,m]=ym.split('-').map(Number); m+=k; while(m<1){m+=12;y--;} while(m>12){m-=12;y++;} return y+'-'+pad(m); }
+function dateInMonth(ym,day){ const [y,m]=ym.split('-').map(Number); const last=new Date(y,m,0).getDate(); return ym+'-'+pad(Math.min(day,last)); }
+/* adds one entry per missed month (lastMonth+1 .. current month) for each active template; returns # added */
+function applyRecurring(state,todayYmd){
+  const cur=todayYmd.slice(0,7); let n=0;
+  for(const r of state.recurring||[]){
+    if(!r.active) continue;
+    let ym=ymAdd(r.lastMonth,1);
+    while(ym<=cur){
+      const date=dateInMonth(ym,r.day);
+      if(!state.txs.some(t=>t.recurId===r.id && (t.date||'').slice(0,7)===ym)){ // added on first open of the month (even if its day is later in the month - edit/delete freely)
+        state.txs.push({id:'r'+r.id+'_'+ym,ts:Date.now()+n,date,amount:r.amount,cat:r.cat,src:r.src,card:r.src==='card'?r.card:null,
+          channel:r.channel||'online',pay:r.pay,merchant:r.merchant||'',fcy:false,recurId:r.id,auto:true});
+        n++;
+      }
+      r.lastMonth=ym; ym=ymAdd(ym,1);
+    }
+  }
+  return n;
+}
+
+/* ===== Expense summary across all payment sources ===== */
+function srcKey(t){ return isCardTx(t)?'card:'+(t.card||'?'):t.src; }
+function monthTotals(state,ym){
+  const ex=new Set(state.settings&&state.settings.excludeCats||[]);
+  const o={total:0,excluded:0,byCat:{},bySrc:{},count:0,excludedByCat:{}};
+  for(const t of state.txs){ if(t.date.slice(0,7)!==ym) continue; const a=+t.amount||0;
+    if(ex.has(t.cat)){ o.excluded+=a; o.excludedByCat[t.cat]=(o.excludedByCat[t.cat]||0)+a; continue; }
+    o.total+=a; o.count++; o.byCat[t.cat]=(o.byCat[t.cat]||0)+a; const k=srcKey(t); o.bySrc[k]=(o.bySrc[k]||0)+a; }
+  return o;
+}
+function expenseSummary(state,ym){
+  const cur=monthTotals(state,ym), prev=monthTotals(state,ymAdd(ym,-1));
+  const budgets=(state.settings&&state.settings.budgets)||{};
+  const cats=[...new Set([...Object.keys(cur.byCat),...Object.keys(prev.byCat),...Object.keys(budgets).filter(k=>budgets[k]>0)])]
+    .filter(c=>!(state.settings.excludeCats||[]).includes(c));
+  const rows=cats.map(c=>{ const a=cur.byCat[c]||0, p=prev.byCat[c]||0, b=+budgets[c]||0;
+    return {cat:c,amount:a,pct:cur.total?a/cur.total:0,prev:p,diff:a-p,budget:b,remaining:b?b-a:null,budgetPct:b?a/b:null}; })
+    .sort((x,y)=>y.amount-x.amount||y.budget-x.budget);
+  const trend=[]; for(let k=5;k>=0;k--){ const m=ymAdd(ym,-k); trend.push({ym:m,total:monthTotals(state,m).total}); }
+  // miles only over card spend
+  return {ym,total:cur.total,prevTotal:prev.total,excluded:cur.excluded,excludedByCat:cur.excludedByCat,count:cur.count,rows,bySrc:cur.bySrc,trend};
+}
+/* card-only stats for a month (effective mpd & missed ignore non-card spend) */
+function cardMonthStats(state,ym,L){
+  L=L||evalLedger(state); let spend=0,miles=0,missed=0;
+  for(const t of state.txs){ if(t.date.slice(0,7)!==ym||!isCardTx(t)) continue; const r=L.res[t.id]||{}; spend+=+t.amount; miles+=r.miles||0; missed+=r.missed||0; }
+  return {spend,miles,missed,mpd:spend?miles/spend:0};
+}
+
+if(typeof module!=='undefined'&&module.exports) module.exports={SOURCES,isCardTx,migrateState,applyRecurring,expenseSummary,cardMonthStats,monthTotals,ymAdd,setKfMode,CATS,DEFAULT_CARDS,cycleStart,cycleEnd,allocate,evalLedger,recommend,poolStatus,cheatSheet,cardMinStatus,ruleMatches};
 
 /* ===== UI ===== */
 const LS_KEY='sgMilesTracker.v2';
@@ -375,11 +471,12 @@ let S=load();
 let view='add', viewMonth=today().slice(0,7), editingId=null, openCard=null;
 let draft=freshDraft(); let pickedCard=null;
 
-function freshDraft(){return {amount:'',cat:'dining',channel:'instore',pay:'wallet',inApp:false,fcy:false,sea:false,merchant:'',date:today()};}
+function freshDraft(){return {src:'card',amount:'',cat:'dining',channel:'instore',pay:'wallet',inApp:false,fcy:false,sea:false,merchant:'',date:today(),repeat:false};}
+function isNC(){return draft.src&&draft.src!=='card';}
 function load(){ let s=null; try{s=JSON.parse(localStorage.getItem(LS_KEY));}catch(e){}
   if(!(s&&s.cards&&s.txs)){ s={version:2,cards:clone(DEFAULT_CARDS),txs:[],settings:{kf:true}};
     try{ const old=JSON.parse(localStorage.getItem('sgMilesTracker.v1')); if(old&&old.txs&&old.txs.length) s.txs=old.txs.filter(t=>DEFAULT_CARDS.some(c=>c.id===t.card)); }catch(e){} }
-  s.settings=s.settings||{kf:true}; setKfMode(s.settings.kf!==false); return s; }
+  migrateState(s); setKfMode(s.settings.kf!==false); return s; }
 function save(){ localStorage.setItem(LS_KEY,JSON.stringify(S)); }
 function held(){return S.cards.filter(c=>c.held);}
 function cardById(id){return S.cards.find(c=>c.id===id);}
@@ -395,6 +492,7 @@ function render(){ const m=$('#main');
   if(view==='best') m.innerHTML=viewBest();
   if(view==='cards') m.innerHTML=viewCards();
   if(view==='data') m.innerHTML=viewData();
+  if(view==='exp') m.innerHTML=viewExpenses();
   if(view==='add') updateReco();
 }
 
@@ -406,20 +504,22 @@ function viewAdd(){
   ${noCards?`<div class="banner">👋 First, go to <b>Cards</b> and tick the cards you hold. <button class="link" onclick="setView('cards')">Set up cards →</button></div>`:''}
   <div class="card">
     <div class="row"><span class="cur">S$</span><input id="amt" class="amt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" value="${esc(d.amount)}" oninput="draft.amount=this.value;updateReco()"></div>
-    <div class="chips">${CATS.map(c=>`<button class="chip ${d.cat===c.id?'on':''}" onclick="setCat('${c.id}')">${c.icon} ${esc(c.short)}</button>`).join('')}</div>
+    <div class="paidby"><small>Paid by</small><div class="seg seg4 small">${SOURCES.map(x=>`<button class="${(d.src||'card')===x.id?'on':''}" onclick="setSrc('${x.id}')">${x.icon} ${esc(x.name)}</button>`).join('')}</div></div>
+    <div class="chips">${(isNC()?[...CATS.filter(c=>c.nc),...CATS.filter(c=>!c.nc&&c.id!=='fcy'&&c.id!=='contactless')]:CATS).map(c=>`<button class="chip ${d.cat===c.id?'on':''}" onclick="setCat('${c.id}')">${c.icon} ${esc(c.short)}</button>`).join('')}</div>
     <div id="bestline" class="bestline"></div>
-    <div class="seg">
+    ${isNC()?'':`<div class="seg">
       <button class="${d.channel==='instore'?'on':''}" onclick="draft.channel='instore';render()">🏬 In-store</button>
       <button class="${d.channel==='online'?'on':''}" onclick="draft.channel='online';render()">🌐 Online / in-app</button>
     </div>
     ${d.channel==='instore'?`<div class="seg seg3 small">${[['wallet','📱 Phone/watch tap'],['tap','💳 Card tap'],['chip','🔌 Chip/swipe']].map(([v,l])=>`<button class="${d.pay===v?'on':''}" onclick="draft.pay='${v}';render()">${l}</button>`).join('')}</div>`
       :`<label class="tog"><input type="checkbox" ${d.inApp?'checked':''} onchange="draft.inApp=this.checked;updateReco()"> Paying with Apple/Google Pay inside the app/site</label>`}
     <label class="tog"><input type="checkbox" ${d.fcy||d.cat==='fcy'?'checked':''} ${d.cat==='fcy'?'disabled':''} onchange="draft.fcy=this.checked;render()"> Foreign currency (charged in non-SGD)</label>
-    ${d.fcy||d.cat==='fcy'?`<label class="tog"><input type="checkbox" ${d.sea?'checked':''} onchange="draft.sea=this.checked;updateReco()"> Charged in IDR / MYR / THB / VND</label>`:''}
+    ${d.fcy||d.cat==='fcy'?`<label class="tog"><input type="checkbox" ${d.sea?'checked':''} onchange="draft.sea=this.checked;updateReco()"> Charged in IDR / MYR / THB / VND</label>`:''}`}
     <div class="grid2">
-      <input placeholder="Merchant (optional, e.g. Shopee, Grab)" value="${esc(d.merchant)}" oninput="draft.merchant=this.value;updateReco()">
+      <input placeholder="${isNC()?'Payee / note (e.g. Landlord, Mum)':'Merchant (optional, e.g. Shopee, Grab)'}" value="${esc(d.merchant)}" oninput="draft.merchant=this.value;updateReco()">
       <input type="date" value="${esc(d.date)}" onchange="draft.date=this.value||today();updateReco()">
     </div>
+    <label class="tog repeat"><input type="checkbox" ${d.repeat?'checked':''} onchange="draft.repeat=this.checked"> 🔁 Repeat monthly (auto-adds on the same day each month, e.g. rent; each one stays editable/deletable)</label>
   </div>
   <div id="reco"></div>
   <div class="btnrow">
@@ -427,10 +527,14 @@ function viewAdd(){
     ${editingId?`<button onclick="cancelEdit()">Cancel edit</button>`:''}
   </div>`;
 }
+function setSrc(v){ draft.src=v; if(v!=='card'){ if(!editingId && (draft.cat==='dining'||draft.cat==='fcy'||draft.cat==='contactless')) draft.cat=v==='bank'?'rent':v==='paynow'?'family':'others'; } render(); }
 function setCat(c){ draft.cat=c; const def=CAT[c].ch; if(!editingId) draft.channel=def; if(c==='fcy') draft.fcy=true; render(); }
-function draftTx(){ const f=!!draft.fcy||draft.cat==='fcy'; return {...draft,amount:+draft.amount||0,fcy:f,sea:f&&!!draft.sea,inApp:draft.channel==='online'&&!!draft.inApp,pay:draft.channel==='instore'?draft.pay:undefined}; }
+function draftTx(){ if(isNC()) return {src:draft.src,amount:+draft.amount||0,cat:draft.cat,channel:'online',fcy:false,merchant:draft.merchant,date:draft.date,card:null};
+  const f=!!draft.fcy||draft.cat==='fcy'; return {...draft,amount:+draft.amount||0,fcy:f,sea:f&&!!draft.sea,inApp:draft.channel==='online'&&!!draft.inApp,pay:draft.channel==='instore'?draft.pay:undefined}; }
 function updateReco(){
   const box=$('#reco'); if(!box) return; const d=draftTx();
+  if(isNC()){ const sv=SRC[draft.src]; box.innerHTML=`<div class="card nc"><div class="h3">${sv.icon} ${esc(sv.name)}</div><div class="sub">Earns 0 miles. Not counted in card caps, minimum spend, effective mpd or "miles missed" - it only shows in <b>Expenses</b>.${(S.settings.excludeCats||[]).includes(d.cat)?' This category is excluded from expense totals (change in Data → Expenses settings).':''}</div></div>`;
+    const bl=$('#bestline'); if(bl) bl.innerHTML=''; const b=$('#saveBtn'); if(b) b.textContent=(editingId?'Update':'Save')+(d.amount>0?` ${money(d.amount)} via ${sv.name}`:''); return; }
   if(!held().length){box.innerHTML='';return;}
   const amt=d.amount>0?d.amount:100;
   const r=recommend(S,{...d,amount:amt},editingId);
@@ -463,14 +567,31 @@ function updateReco(){
   if(b) b.textContent=(editingId?'Update':'Save')+(d.amount>0&&sel?` ${money(d.amount)} on ${short(sel.card.name)} (+${n0(sel.miles)} mi)`:'');
 }
 function saveTx(){
-  const d=draftTx(); if(!(d.amount>0)) return toast('Enter an amount'); if(!pickedCard) return toast('Tick your cards first (Cards tab)');
-  if(editingId){ const t=S.txs.find(t=>t.id===editingId); Object.assign(t,{...d,card:pickedCard}); editingId=null; toast('Updated'); }
-  else { S.txs.push({...d,card:pickedCard,id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now()}); toast('Saved ✓'); }
-  save(); const keepDate=draft.date; draft=freshDraft(); draft.date=keepDate; pickedCard=null; render();
+  const d=draftTx(); if(!(d.amount>0)) return toast('Enter an amount');
+  const nc=isNC(); if(!nc && !pickedCard) return toast('Tick your cards first (Cards tab)');
+  const rec={...d,src:nc?draft.src:'card',card:nc?null:pickedCard};
+  let t;
+  if(editingId){ t=S.txs.find(t=>t.id===editingId); const keep={id:t.id,ts:t.ts,recurId:t.recurId,auto:t.auto,demo:t.demo};
+    Object.keys(t).forEach(k=>delete t[k]); Object.assign(t,rec,keep); Object.keys(t).forEach(k=>t[k]===undefined&&delete t[k]); editingId=null; toast('Updated'); }
+  else { t={...rec,id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now()}; S.txs.push(t); toast('Saved ✓'); }
+  syncRecurring(t,!!draft.repeat);
+  save(); const keepDate=draft.date, keepSrc=draft.src; draft=freshDraft(); draft.date=keepDate; if(keepSrc!=='card'){ draft.src=keepSrc; draft.cat=keepSrc==='bank'?'rent':keepSrc==='paynow'?'family':'others'; } pickedCard=null; render();
 }
-function editTx(id){ const t=S.txs.find(t=>t.id===id); if(!t) return; editingId=id; draft={amount:t.amount,cat:t.cat,channel:t.channel,pay:t.pay||(t.wallet===false?'tap':'wallet'),inApp:!!t.inApp,fcy:!!t.fcy,sea:!!t.sea,merchant:t.merchant||'',date:t.date}; pickedCard=t.card; setView('add'); }
+/* repeat-monthly templates live in S.recurring; each auto-added entry is a normal, editable transaction */
+function syncRecurring(t,on){
+  let r=t.recurId&&S.recurring.find(x=>x.id===t.recurId);
+  if(on){
+    const f={amount:+t.amount,cat:t.cat,src:t.src||'card',card:t.card||null,channel:t.channel,pay:t.pay,merchant:t.merchant||'',day:+t.date.slice(8)};
+    if(r){ Object.assign(r,f,{active:true}); }
+    else { r={id:'rc'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),...f,active:true,lastMonth:[t.date.slice(0,7),today().slice(0,7)].sort().pop()}; S.recurring.push(r); t.recurId=r.id; }
+  } else if(r){ r.active=false; }
+}
+function stopRecurring(id){ const r=S.recurring.find(x=>x.id===id); if(r){ r.active=false; save(); render(); toast('Stopped repeating'); } }
+function editTx(id){ const t=S.txs.find(t=>t.id===id); if(!t) return; editingId=id; const rr=t.recurId&&S.recurring.find(x=>x.id===t.recurId); draft={src:t.src||'card',repeat:!!(rr&&rr.active),amount:t.amount,cat:t.cat,channel:t.channel||'online',pay:t.pay||(t.wallet===false?'tap':'wallet'),inApp:!!t.inApp,fcy:!!t.fcy,sea:!!t.sea,merchant:t.merchant||'',date:t.date}; pickedCard=t.card; setView('add'); }
 function cancelEdit(){ editingId=null; draft=freshDraft(); pickedCard=null; render(); }
-function delTx(id){ if(!confirm('Delete this transaction?')) return; S.txs=S.txs.filter(t=>t.id!==id); save(); render(); toast('Deleted'); }
+function delTx(id){ const t=S.txs.find(x=>x.id===id); if(!t||!confirm('Delete this transaction?')) return; S.txs=S.txs.filter(x=>x.id!==id);
+  const r=t.recurId&&S.recurring.find(x=>x.id===t.recurId); if(r&&r.active&&confirm('Also stop repeating it every month? (Cancel = keep repeating)')) r.active=false;
+  save(); render(); toast('Deleted'); }
 
 /* ---------- Month ---------- */
 function shiftMonth(k){ let [y,m]=viewMonth.split('-').map(Number); m+=k; if(m<1){m=12;y--;} if(m>12){m=1;y++;} viewMonth=y+'-'+pad(m); render(); }
@@ -491,15 +612,15 @@ function switchTarget(ps){
 function viewMonthHtml(){
   const [y,m]=viewMonth.split('-').map(Number);
   const L=evalLedger(S); const txs=S.txs.filter(t=>t.date.slice(0,7)===viewMonth).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));
-  const spend=txs.reduce((s,t)=>s+(+t.amount),0), miles=txs.reduce((s,t)=>s+((L.res[t.id]||{}).miles||0),0), missed=txs.reduce((s,t)=>s+((L.res[t.id]||{}).missed||0),0);
+  const cs=cardMonthStats(S,viewMonth,L); const spend=cs.spend, miles=cs.miles, missed=cs.missed; const ctx=txs.filter(isCardTx);
   const ref=refDateForMonth(); const pools=poolStatus(S,ref); const mins=cardMinStatus(S,ref);
-  const byCard={}; txs.forEach(t=>{byCard[t.card]=byCard[t.card]||{s:0,m:0}; byCard[t.card].s+=+t.amount; byCard[t.card].m+=(L.res[t.id]||{}).miles||0;});
-  const byCat={}; txs.forEach(t=>{byCat[t.cat]=(byCat[t.cat]||0)+(+t.amount);});
+  const byCard={}; ctx.forEach(t=>{byCard[t.card]=byCard[t.card]||{s:0,m:0}; byCard[t.card].s+=+t.amount; byCard[t.card].m+=(L.res[t.id]||{}).miles||0;});
+  const byCat={}; ctx.forEach(t=>{byCat[t.cat]=(byCat[t.cat]||0)+(+t.amount);});
   return `
   <div class="mswitch"><button onclick="shiftMonth(-1)">‹</button><b>${MONTHS[m-1]} ${y}</b><button onclick="shiftMonth(1)">›</button></div>
   <div class="stats">
     <div><small>Miles earned</small><b>${n0(miles)}</b></div>
-    <div><small>Spend</small><b>${money(spend)}</b></div>
+    <div><small>Card spend</small><b>${money(spend)}</b></div>
     <div><small>Effective mpd</small><b>${spend?(miles/spend).toFixed(2):'–'}</b></div>
     <div><small>Miles missed vs best</small><b class="${missed?'red':''}">${n0(missed)}</b></div>
   </div>
@@ -517,7 +638,11 @@ function viewMonthHtml(){
    <div class="h3" style="margin-top:10px">By category</div>${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="kv"><span>${CAT[c]?CAT[c].icon+' '+esc(CAT[c].name):esc(c)}</span><span>${money(v)}</span></div>`).join('')}</div>`:''}
   <div class="card"><div class="h3">Transactions (${txs.length})</div>
   ${txs.length?txs.map(t=>{const r=L.res[t.id]||{}; const c=cardById(t.card); const opt=cardById(r.optimal);
-    return `<div class="tx"><div class="grow"><div><b>${esc(t.merchant||CAT[t.cat].name)}</b> <small>${esc(t.date.slice(8))} ${MONTHS[+t.date.slice(5,7)-1]}</small></div>
+    if(!isCardTx(t)){ const sv=SRC[t.src]||{icon:'?',name:t.src}; return `<div class="tx"><div class="grow"><div><b>${esc(t.merchant||(CAT[t.cat]||{name:t.cat}).name)}</b> <small>${esc(t.date.slice(8))} ${MONTHS[+t.date.slice(5,7)-1]}</small>${t.recurId?' <small title="repeats monthly">🔁</small>':''}</div>
+      <div class="sub">${(CAT[t.cat]||{icon:''}).icon} ${esc((CAT[t.cat]||{name:t.cat}).name)} · ${sv.icon} ${esc(sv.name)} · no miles</div></div>
+      <div class="miles">${money(t.amount)}<br><small>0 mi</small></div>
+      <div class="acts"><button onclick="editTx('${t.id}')" aria-label="edit">✏️</button><button onclick="delTx('${t.id}')" aria-label="delete">🗑️</button></div></div>`; }
+    return `<div class="tx"><div class="grow"><div><b>${esc(t.merchant||CAT[t.cat].name)}</b> <small>${esc(t.date.slice(8))} ${MONTHS[+t.date.slice(5,7)-1]}</small>${t.recurId?' <small title="repeats monthly">🔁</small>':''}</div>
       <div class="sub">${CAT[t.cat].icon} ${esc(CAT[t.cat].name)} · ${t.channel==='online'?'online'+(t.inApp?' (in-app wallet)':''):'in-store ('+({wallet:'phone tap',tap:'card tap',chip:'chip'}[t.pay||(t.wallet===false?'tap':'wallet')])+')'}${t.fcy?' · FCY'+(t.sea?' (SEA)':''):''} · ${esc(c?short(c.name):'?')}</div>
       ${r.pendingMin?`<div class="warn">Bonus pending min spend</div>`:''}
       ${r.missed>0&&opt?`<div class="warn">Best was ${esc(short(opt.name))}: +${n0(r.missed)} mi</div>`:''}</div>
@@ -579,6 +704,8 @@ function toggleHeld(id,v){cardById(id).held=v; save(); pickedCard=null; render()
 function setCardF(id,k,v){cardById(id)[k]=v; save(); render();}
 function setOpt(id,k,v){const c=cardById(id); c.options=c.options||{}; c.options[k]=v; save(); render();}
 function setLady(id,k,v){const c=cardById(id); const a=c.options.ladyCats.slice(); a[k]=v; if(a[0]===a[1]) return toast('Pick two different categories'); c.options.ladyCats=a; save(); render();}
+function toggleExcl(c,on){ const a=new Set(S.settings.excludeCats||[]); on?a.add(c):a.delete(c); S.settings.excludeCats=[...a]; save(); render(); }
+function setBudget(c,v){ v=+v; if(v>0) S.settings.budgets[c]=v; else delete S.settings.budgets[c]; save(); render(); }
 function setKf(v){S.settings.kf=v; setKfMode(v); save(); render();}
 function setPool(id,pid,k,v){cardById(id).pools[pid][k]=v; save(); render();}
 function setRule(id,k,v){cardById(id).rules[k].mpd=v; save(); render();}
@@ -594,9 +721,15 @@ function viewData(){
    <div class="sub">Data lives only in this browser (localStorage). Export regularly, especially before clearing browser data or switching phones.</div></div>
   <div class="card"><div class="h3">Demo</div>
    <div class="btnrow"><button onclick="loadDemo()">Load demo data</button><button onclick="clearDemo()">Remove demo transactions</button><button class="danger" onclick="clearAll()">Delete ALL transactions</button></div>
-   <div class="sub">Demo adds 8 transactions (merchant marked "[DEMO]"). "Remove demo transactions" deletes only those.</div></div>
+   <div class="sub">Demo adds 12 transactions (incl. rent by bank transfer, PayNow, cash) (merchant marked "[DEMO]"). "Remove demo transactions" deletes only those.</div></div>
   <div class="card"><div class="h3">Settings</div>
    <label class="tog"><input type="checkbox" ${S.settings.kf!==false?'checked':''} onchange="setKf(this.checked)"> Count miles as <b>KrisFlyer</b> miles (HSBC converts 25,000 pts → 10,000 KF, so 4 mpd → 3.33 KF mpd; other cards convert 1:1)</label></div>
+  <div class="card"><div class="h3">Expenses settings</div>
+   <div class="sub">Categories <b>excluded</b> from expense totals (still logged):</div>
+   ${CATS.filter(c=>c.nc||['insurance','bills'].includes(c.id)).map(c=>`<label class="tog"><input type="checkbox" ${(S.settings.excludeCats||[]).includes(c.id)?'checked':''} onchange="toggleExcl('${c.id}',this.checked)"> ${c.icon} ${esc(c.name)}</label>`).join('')}
+   <div class="h3" style="margin-top:10px">🔁 Repeating monthly</div>
+   ${S.recurring.filter(r=>r.active).length?S.recurring.filter(r=>r.active).map(r=>`<div class="kv"><span>${esc(r.merchant||CAT[r.cat].name)} · ${money(r.amount)} · day ${r.day} · ${esc(r.src==='card'?short((cardById(r.card)||{name:'card'}).name):SRC[r.src].name)}</span><button class="link" onclick="stopRecurring('${r.id}')">Stop</button></div>`).join(''):'<div class="sub">None. Tick "Repeat monthly" when adding an entry (e.g. rent).</div>'}
+   <div class="sub">A repeating entry is added automatically the first time you open the app in a new month. Each one is a normal transaction you can edit or delete.</div></div>
   <div class="card"><div class="h3">How miles are calculated (assumptions)</div><ul class="sub">
    <li>Each card has bonus rules (category, online/in-store, payment method, SGD/FCY, merchant keywords) and cap pools. A purchase uses the highest-mpd rule whose cap still has room. Overflow goes to the base rate, and the app suggests a split when that earns more.</li>
    <li><b>Gates:</b> a card is greyed out with a reason when its cap is used up ("Cap reached"), its minimum spend isn't met ("Min spend not met"), or the purchase doesn't qualify ("Not eligible", e.g. a physical card tap on UOB PPV, an in-app Apple Pay payment on Citi Rewards, fast food on HSBC Revolution, Agoda/Expedia on HSBC, streaming on Lady's Entertainment).</li>
@@ -604,10 +737,11 @@ function viewData(){
    <li>Caps reset per calendar month, or per statement month from the day you set (Citi Rewards and UOB Visa Signature use statement months, so set your statement date in Cards).</li>
    <li>UOB Visa Signature needs S$1,000 per statement month in each bucket (FCY / local contactless). Logged spend only earns the bonus once the total reaches it ("pending"). Recommendations don't assume it unless you tick that option.</li>
    <li>Category ≠ MCC. Banks pay bonuses by merchant category code, and the app maps categories to typical MCCs. Bills/insurance earn no bonus (UOB/HSBC earn 0 on them).</li>
+   <li>Bank transfer / PayNow / Cash entries earn 0 miles and are ignored for caps, minimum spend, recommendations, effective mpd and miles missed. They only count in Expenses.</li>
    <li>Not modelled: welcome offers, Kris+/HeyMax stacking, UOB Lady's Savings boost, Citi PayAll, FCY fees (≈3.25%) and Amaze's 1% SGD fee (warning only).</li></ul></div>`;
 }
 function exportJson(){ const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='miles-tracker-backup-'+today()+'.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Exported'); }
-function importFile(f){ if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o.cards||!o.txs) throw new Error('Not a tracker backup'); if(!confirm(`Import ${o.txs.length} transactions and ${o.cards.length} cards? This replaces current data.`)) return; S=o; save(); toast('Imported'); render(); }catch(e){ alert('Import failed: '+e.message); } }; rd.readAsText(f); }
+function importFile(f){ if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o.cards||!o.txs) throw new Error('Not a tracker backup'); if(!confirm(`Import ${o.txs.length} transactions and ${o.cards.length} cards? This replaces current data.`)) return; S=migrateState(o); setKfMode(S.settings.kf!==false); const n=applyRecurring(S,today()); save(); toast('Imported'+(n?` (+${n} recurring)`:'')); render(); }catch(e){ alert('Import failed: '+e.message); } }; rd.readAsText(f); }
 function loadDemo(){
   const t=today(); const ym=t.slice(0,8); const d=n=>ym+pad(Math.min(n,+t.slice(8)||1));
   const demo=[
@@ -618,12 +752,55 @@ function loadDemo(){
    {date:d(4),merchant:'[DEMO] Scoot flight',cat:'travel',channel:'online',amount:420.00,card:'dbs_wwmc'},
    {date:d(5),merchant:'[DEMO] SP Group bill',cat:'bills',channel:'online',amount:98.20,card:'citi_prestige'},
    {date:d(6),merchant:'[DEMO] Golden Village',cat:'entertainment',channel:'instore',pay:'wallet',amount:39.00,card:'uob_lady_sol'},
+   {date:d(1),merchant:'[DEMO] Rent',cat:'rent',src:'bank',amount:3000,card:null},
+   {date:d(3),merchant:'[DEMO] Mum',cat:'family',src:'paynow',amount:500,card:null},
+   {date:d(4),merchant:'[DEMO] Hawker',cat:'dining',src:'cash',amount:18.50,card:null},
+   {date:d(5),merchant:'[DEMO] Endowus',cat:'savings',src:'bank',amount:1000,card:null},
    {date:d(7),merchant:'[DEMO] Uniqlo Tokyo',cat:'fcy',channel:'instore',pay:'tap',fcy:true,amount:210.00,card:'uob_prvi'}];
-  demo.forEach((x,i)=>S.txs.push({fcy:false,...x,id:'demo'+i+Date.now().toString(36),ts:Date.now()+i,demo:true}));
+  demo.forEach((x,i)=>S.txs.push({fcy:false,src:'card',...x,id:'demo'+i+Date.now().toString(36),ts:Date.now()+i,demo:true}));
   save(); toast('Demo data loaded'); viewMonth=t.slice(0,7); setView('month');
 }
 function clearDemo(){ S.txs=S.txs.filter(t=>!t.demo); save(); toast('Demo removed'); render(); }
 function clearAll(){ if(!confirm('Delete ALL transactions? Export a backup first if unsure.')) return; S.txs=[]; save(); render(); }
 
-document.addEventListener('DOMContentLoaded',()=>{ view=held().length?'add':'cards'; document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view)); render(); });
+document.addEventListener('DOMContentLoaded',()=>{ view=held().length?'add':'cards'; const nAdded=applyRecurring(S,today()); save(); if(nAdded) setTimeout(()=>toast(`🔁 Added ${nAdded} repeating entr${nAdded>1?'ies':'y'} for this month`),300); document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view)); render(); });
+
+/* ---------- Expenses (all payment sources) ---------- */
+function srcName(k){ if(k.startsWith('card:')){ const c=cardById(k.slice(5)); return '💳 '+(c?short(c.name):'Card'); } const x=SRC[k]; return x?x.icon+' '+x.name:k; }
+function barCls(p){ return p>1?'red':p>=0.75?'amber':'green'; }
+function viewExpenses(){
+  const [y,m]=viewMonth.split('-').map(Number); const E=expenseSummary(S,viewMonth);
+  const diffPct=E.prevTotal?(E.total-E.prevTotal)/E.prevTotal:null;
+  const arrow=(d)=>Math.abs(d)<0.005?'<span class="sub">= last month</span>':d>0?`<span class="up">▲ ${money(d)}</span>`:`<span class="down">▼ ${money(-d)}</span>`;
+  const rows=E.rows.filter(r=>r.amount>0||r.prev>0);
+  const maxCat=Math.max(1,...rows.map(r=>r.amount));
+  const srcs=Object.entries(E.bySrc).sort((a,b)=>b[1]-a[1]); const maxSrc=Math.max(1,...srcs.map(x=>x[1]));
+  const maxT=Math.max(1,...E.trend.map(t=>t.total));
+  const budgeted=E.rows.filter(r=>r.budget>0);
+  const ex=S.settings.excludeCats||[];
+  return `
+  <div class="mswitch"><button onclick="shiftMonth(-1)">‹</button><b>${MONTHS[m-1]} ${y}</b><button onclick="shiftMonth(1)">›</button></div>
+  <div class="stats">
+    <div><small>Total spend</small><b>${money(E.total)}</b></div>
+    <div><small>vs ${MONTHS[(m+10)%12]}</small><b class="${diffPct===null?'':diffPct>0?'red':'green'}">${diffPct===null?'–':(diffPct>0?'▲ ':'▼ ')+Math.abs(diffPct*100).toFixed(0)+'%'}</b></div>
+    <div><small>Entries</small><b>${E.count}</b></div>
+    <div><small>Excluded transfers</small><b>${money(E.excluded)}</b></div>
+  </div>
+  <div class="card"><div class="h3">By category <small>(vs last month)</small></div>
+   ${rows.length?rows.map(r=>{const c=CAT[r.cat]||{icon:'•',name:r.cat}; return `<div class="erow"><div class="ehead"><span>${c.icon} ${esc(c.name)}</span><span><b>${money(r.amount)}</b> <small>${(r.pct*100).toFixed(0)}%</small></span></div>
+     <div class="bar thin"><i class="blue" style="width:${(r.amount/maxCat*100).toFixed(1)}%"></i></div><div class="sub right">${arrow(r.diff)}</div></div>`;}).join(''):'<div class="sub">No expenses this month.</div>'}
+   ${E.excluded?`<div class="sub">Not counted: ${Object.entries(E.excludedByCat).map(([c,v])=>`${(CAT[c]||{icon:''}).icon} ${esc((CAT[c]||{name:c}).name)} ${money(v)}`).join(', ')} (Data → Expenses settings)</div>`:''}
+  </div>
+  <div class="card"><div class="h3">By payment source</div>
+   ${srcs.length?srcs.map(([k,v])=>`<div class="erow"><div class="ehead"><span>${esc(srcName(k))}</span><span><b>${money(v)}</b> <small>${E.total?(v/E.total*100).toFixed(0):0}%</small></span></div><div class="bar thin"><i class="${k.startsWith('card:')?'blue':'grey'}" style="width:${(v/maxSrc*100).toFixed(1)}%"></i></div></div>`).join(''):'<div class="sub">–</div>'}
+  </div>
+  <div class="card"><div class="h3">Budgets</div>
+   ${budgeted.length?budgeted.map(r=>{const c=CAT[r.cat]||{icon:'',name:r.cat}; const p=r.budgetPct; return `<div class="cap"><div class="caphead"><span>${c.icon} ${esc(c.name)}</span><span>${money(r.amount).replace('.00','')} / ${money(r.budget).replace('.00','')}</span></div>
+     <div class="bar"><i class="${barCls(p)}" style="width:${Math.min(100,p*100).toFixed(1)}%"></i></div><div class="sub ${r.remaining<0?'red':''}">${r.remaining>=0?money(r.remaining)+' left':money(-r.remaining)+' over budget'}</div></div>`;}).join(''):'<div class="sub">No budgets set.</div>'}
+   <details><summary>Set monthly budgets</summary>${CATS.filter(c=>!ex.includes(c.id)&&c.id!=='fcy'&&c.id!=='contactless').map(c=>`<label class="kv"><span>${c.icon} ${esc(c.name)}</span><input class="bud" type="number" inputmode="decimal" min="0" step="10" placeholder="–" value="${S.settings.budgets[c.id]||''}" onchange="setBudget('${c.id}',this.value)"></label>`).join('')}<div class="sub">Same budget every month. Leave blank for none.</div></details>
+  </div>
+  <div class="card"><div class="h3">6-month trend</div>
+   <div class="trend">${E.trend.map(t=>`<div class="tcol ${t.ym===viewMonth?'on':''}"><small>${t.total?(t.total>=1000?(t.total/1000).toFixed(1)+'k':Math.round(t.total)):''}</small><i style="height:${(t.total/maxT*85).toFixed(1)}%"></i><span>${MONTHS[+t.ym.slice(5)-1]}</span></div>`).join('')}</div>
+  </div>`;
+}
 </script></body></html>
