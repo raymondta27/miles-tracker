@@ -1,0 +1,629 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3d91"><title>SG Miles Tracker</title><style>*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f2f4f7;color:#1d2433;font-size:15px;padding-bottom:76px}
+header{background:#0b3d91;color:#fff;padding:12px 16px;position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center}header h1{font-size:17px;margin:0}header small{opacity:.8}
+main{max-width:640px;margin:0 auto;padding:10px}
+.card{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.h3{font-weight:700;margin-bottom:8px}.h3 small{font-weight:400;color:#667}
+.row{display:flex;align-items:center;gap:8px}.grow{flex:1;min-width:0}
+.cur{font-size:22px;color:#667}.amt{font-size:30px;font-weight:700;border:none;outline:none;width:100%;padding:4px 0;background:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.chip{border:1px solid #d0d5dd;background:#fff;border-radius:18px;padding:7px 10px;font-size:13px}
+.chip.on{background:#0b3d91;color:#fff;border-color:#0b3d91}
+.seg{display:flex;border:1px solid #d0d5dd;border-radius:10px;overflow:hidden;margin:6px 0}.seg button{flex:1;border:none;background:#fff;padding:10px;font-size:14px}.seg button.on{background:#e8efff;color:#0b3d91;font-weight:700}
+.tog{display:flex;gap:8px;align-items:center;margin:8px 0;font-size:14px}.tog input{width:20px;height:20px}
+input,select,textarea{font:inherit;border:1px solid #d0d5dd;border-radius:9px;padding:9px;width:100%;background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}label{font-size:12px;color:#556}label input,label select{margin-top:3px;font-size:15px;color:#1d2433}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:9px;border:1px solid #e4e7ec;border-radius:10px;margin:6px 0;font-size:14px;color:#1d2433}.opt.sel{border-color:#0b3d91;background:#f3f6ff}.opt input{width:18px;height:18px;margin-top:2px}
+.miles{text-align:right;font-weight:700;white-space:nowrap}.miles small{font-weight:400;color:#667}
+.sub{font-size:12px;color:#667;margin-top:2px}.tag{background:#12b76a;color:#fff;font-size:10px;padding:2px 6px;border-radius:6px;vertical-align:middle}
+.note{background:#fff8e1;border-left:4px solid #f5a524;padding:8px;border-radius:8px;font-size:13px;margin-bottom:6px}
+.warn{font-size:12px;color:#b54708;margin-top:2px}.vf{color:#b54708;font-weight:600}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}button{font:inherit;border:1px solid #d0d5dd;background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
+button.primary{background:#0b3d91;color:#fff;border-color:#0b3d91;flex:1;font-weight:700;padding:13px}button.danger{color:#d92d20;border-color:#fda29b}
+button.link{border:none;background:none;color:#0b3d91;padding:4px;font-weight:600}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e4e7ec;display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}nav button{flex:1;border:none;border-radius:0;background:none;padding:8px 2px;font-size:11px;color:#667}nav button b{display:block;font-size:20px}nav button.on{color:#0b3d91;font-weight:700}
+.mswitch{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mswitch b{font-size:18px}.mswitch button{padding:6px 16px;font-size:18px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.stats div{background:#fff;border-radius:12px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}.stats small{color:#667;display:block}.stats b{font-size:20px}.red{color:#d92d20}
+.cap{margin:10px 0}.caphead{display:flex;justify-content:space-between;font-size:13px;font-weight:600;gap:6px}.bar{height:10px;background:#eaecf0;border-radius:6px;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%}
+.bar i.green{background:#12b76a}.bar i.amber{background:#f5a524}.bar i.red{background:#f04438}
+.capmsg{font-size:13px;margin-top:4px;padding:6px 8px;border-radius:8px}.capmsg.red{background:#fef3f2;color:#b42318}.capmsg.amber{background:#fffaeb;color:#b54708}
+.kv{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid #f2f4f7}
+.tx{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f2f4f7}.acts{display:flex;flex-direction:column;gap:4px}.acts button{padding:4px 7px;font-size:13px}
+.best{padding:8px 0;border-bottom:1px solid #f2f4f7}.bcat{font-weight:700;margin-bottom:4px}.bcols{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px}.bcols small{color:#667;display:block}
+.banner{background:#e8efff;padding:12px;border-radius:12px;margin-bottom:10px}
+.editor{border-top:1px solid #eaecf0;margin-top:8px;padding-top:8px}.info{font-size:12px;background:#f9fafb;padding:8px;border-radius:8px;margin:8px 0;line-height:1.5;word-break:break-word}
+textarea{font-family:monospace;font-size:12px}details summary{cursor:pointer;color:#0b3d91;font-size:13px;margin:6px 0}
+#toast{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:#1d2433;color:#fff;padding:10px 16px;border-radius:20px;opacity:0;transition:.25s;pointer-events:none;z-index:9}#toast.show{opacity:1}
+.bestline{background:#ecfdf3;color:#05603a;border-radius:10px;padding:9px 10px;font-size:14px;margin:4px 0 2px}.bestline:empty{display:none}
+.opt.dim{opacity:.55;background:#f6f7f9}.opt.dim.sel{opacity:.8}
+.badge{white-space:nowrap;display:inline-block;font-size:10px;padding:2px 6px;border-radius:6px;vertical-align:middle;font-weight:600;color:#fff;background:#98a2b3}
+.badge.red{background:#d92d20}.badge.amber{background:#f79009}.badge.grey{background:#98a2b3}
+.why{font-size:12px;margin-top:2px;color:#475467}.why.red{color:#b42318}.why.amber{color:#b54708}
+.split{background:#ecfdf3;border:1px solid #6ce9a6;border-radius:10px;padding:8px 10px;margin:6px 0}.split .kv{font-size:13px}
+.seg.small button{font-size:12px;padding:8px 4px}
+</style></head><body>
+<header><div><h1>✈️ SG Miles Tracker</h1><small>Raymond's card optimiser · data checked 8 Oct 2026</small></div></header>
+<main id="main"></main><div id="toast"></div>
+<nav><button data-v="add" onclick="setView('add')"><b>➕</b>Add</button><button data-v="month" onclick="setView('month')"><b>📅</b>Month</button><button data-v="best" onclick="setView('best')"><b>🏆</b>Best card</button><button data-v="cards" onclick="setView('cards')"><b>💳</b>Cards</button><button data-v="data" onclick="setView('data')"><b>💾</b>Data</button></nav>
+<script>/* ===== Miles engine (pure logic, no DOM) ===== */
+const CHECKED = '2026-10-08';
+const CATS = [
+  {id:'dining',short:'Dining',name:'Dining',icon:'🍽️',ch:'instore'},
+  {id:'groceries',short:'Groceries',name:'Groceries',icon:'🛒',ch:'instore'},
+  {id:'shopping',short:'Shopping',name:'Online shopping / Shopping',icon:'🛍️',ch:'online'},
+  {id:'transport',short:'Transport',name:'Transport / ride-hailing',icon:'🚕',ch:'online'},
+  {id:'travel',short:'Travel',name:'Travel (flights & hotels)',icon:'✈️',ch:'online'},
+  {id:'fcy',short:'Foreign',name:'Foreign currency',icon:'🌏',ch:'instore'},
+  {id:'contactless',short:'Contactless',name:'Contactless in-store (general)',icon:'📱',ch:'instore'},
+  {id:'bills',short:'Bills',name:'Bills / utilities',icon:'🧾',ch:'online'},
+  {id:'insurance',short:'Insurance',name:'Insurance',icon:'☂️',ch:'online'},
+  {id:'entertainment',short:'Entertainment',name:'Entertainment',icon:'🎬',ch:'online'},
+  {id:'others',short:'Others',name:'Others',icon:'•',ch:'instore'}
+];
+const CAT = Object.fromEntries(CATS.map(c=>[c.id,c]));
+const ML = 'https://milelion.com';
+const FASTFOOD='mcdonald|kfc|burger king|starbucks|ya kun|toast box|subway|jollibee|popeyes|mos burger|long john|texas chicken|grabfood|foodpanda|deliveroo|food delivery';
+const OTA='agoda|expedia|booking\\.com|trip\\.com|klook|pelago|airbnb|traveloka|kkday|hotels\\.com|skyscanner|chan brothers|ctc travel|eu holidays|dynasty travel';
+const PUBTRANS='simplygo|\\bmrt\\b|\\bbus\\b|transitlink|\\blrt\\b';
+const STREAMING='netflix|spotify|disney|youtube|hbo|apple tv|apple music|prime video|viu|icloud';
+const SMARTD='\\bshell\\b|\\bspc\\b|cathay cineplex';
+const DEFAULT_CARDS = [
+ {id:'citi_rewards',name:'Citi Rewards Mastercard',bank:'Citi',baseLocal:0.4,baseFcy:0.4,block:1,cycle:'statement',stmtDay:1,held:true,
+  pools:{citiR:{name:'Online + fashion/dept-store (shared)',cap:1000}},
+  rules:[{label:'Online (ex. travel & in-app Apple/Google Pay)',cats:'all',excl:['travel'],channel:'online',noInApp:true,fcy:'any',mpd:4,pools:['citiR'],
+          notMerchant:PUBTRANS,notWhy:'public transport (MCC 4111/4112/4789) is in Citi\'s travel exclusion list',exclWhy:{travel:'travel MCCs (airlines, hotels, OTAs, car rental, cruises) are excluded'}},
+         {label:'Fashion & department stores in-store (clothes, shoes, bags, dept stores)',cats:['shopping'],channel:'instore',fcy:'any',mpd:4,pools:['citiR']}],
+  zeroCats:['insurance'],
+  info:{fee:'S$196.20 (first year free)',expiry:'5-year cycle from card approval (+3 months grace); can be as short as 3 months near the end of a cycle',
+   conversion:'25,000 ThankYou pts = 10,000 KrisFlyer miles; S$27.25 per transfer; no pooling with Citi Prestige (separate fee)',
+   blocks:'Each transaction rounded down to S$1',
+   exclusions:'Online bonus excludes travel MCCs 3000-3999, 4111/4112/4789, 4411, 4722/4723, 5962, 7011/7012, 7512 and in-app Apple/Google Pay payments. In-store bonus only for MCCs 5311, 5611, 5621, 5631, 5641, 5651, 5655, 5661, 5691, 5699, 5948.',
+   notes:'Cap runs by STATEMENT month - set "Statement cycle starts on day" to the day after your statement date (default 1 = please set). Citi Rewards VISA is discontinued from 15 Oct 2026 (no transactions after 14 Oct; its points move to the Mastercard). Assumed yours is the Mastercard - please confirm. Pair with Amaze (Mastercard only) to make in-store spend count as online.',
+   source:ML+'/2026/02/27/review-citi-rewards-credit-card/',verify:['Statement date (set it in the card settings)','Confirm Mastercard (not the Visa being discontinued 15 Oct 2026)']}},
+ {id:'dbs_wwmc',name:"DBS Woman's World Mastercard",bank:'DBS',baseLocal:0.4,baseFcy:1.2,block:1,cycle:'calendar',stmtDay:1,held:true,
+  pools:{wwmc:{name:'Online',cap:1000}},
+  rules:[{label:'All online / in-app spend (incl. flights, hotels, OTAs, in-app Apple/Google Pay)',cats:'all',channel:'online',fcy:'any',mpd:4,pools:['wwmc']}],
+  zeroCats:['insurance'],
+  info:{fee:'S$196.20 (first year free)',expiry:'12-15 months (expires at end of the quarter one year after earning)',conversion:'5,000 DBS Points = 10,000 KrisFlyer miles; S$27.25 per transfer; pools with other DBS cards',
+   blocks:'No S$5 block: amount/5 x points, rounded down (treated as S$1 here)',
+   exclusions:'Blacklist approach - any online spend except DBS general exclusions (insurance, CardUp/ipaymy, MCC 7399, government incl. HealthHub). Amaze-linked transactions earn nothing (since June 2022). In-person hotel payment does not count as online.',
+   notes:'Cap enforced on TRANSACTION date (calendar month). Above cap: 0.4 mpd local / 1.2 mpd FCY.',
+   source:ML+'/2026/08/11/review-dbs-womans-world-card/',verify:[]}},
+ {id:'hsbc_revo',name:'HSBC Revolution',bank:'HSBC',baseLocal:0.4,baseFcy:0.4,block:1,aggBonus:true,cycle:'calendar',stmtDay:1,held:true,kfFactor:25/30,
+  pools:{revo:{name:'Online + contactless (whitelist)',cap:1000}},
+  rules:[{label:'Gyms & membership clubs (MCC 7997, e.g. Anytime Fitness)',cats:'all',excl:[],channel:'any',pay:'contactless',fcy:'any',mpd:4,pools:['revo'],merchant:'anytime fitness|fitness first|\\bgym\\b|\\bbft\\b|country club|golf'},
+         {label:'Dining (restaurants, bars, bakeries, caterers - NOT fast food 5814)',cats:['dining'],channel:'any',pay:'contactless',fcy:'any',mpd:4,pools:['revo'],notMerchant:FASTFOOD,notWhy:'fast food / food delivery (MCC 5814) is not on HSBC\'s whitelist'},
+         {label:'Shopping (38 retail MCCs incl. dept stores, electronics, pharmacies)',cats:['shopping'],channel:'any',pay:'contactless',fcy:'any',mpd:4,pools:['revo']},
+         {label:'Taxis & ride-hailing (MCC 4121)',cats:['transport'],channel:'any',pay:'contactless',fcy:'any',mpd:4,pools:['revo'],notMerchant:PUBTRANS+'|petrol|esso|caltex|sinopec',notWhy:'only taxis/ride-hailing (4121) qualify - SimplyGo (4111) and petrol do not'},
+         {label:'Travel: airlines, hotels, car rental, cruises (NOT OTAs 4722)',cats:['travel'],channel:'any',pay:'contactless',fcy:'any',mpd:4,pools:['revo'],notMerchant:OTA,notWhy:'travel agencies / OTAs (MCC 4722, e.g. Agoda, Expedia, Klook) are not on HSBC\'s whitelist'}],
+  zeroCats:['insurance','bills'],
+  info:{fee:'None (free for life)',expiry:'37 months',conversion:'HSBC points to KrisFlyer at 30,000 : 10,000 (so 4 mpd headline = 3.33 KrisFlyer mpd); free, instant transfers; 25,000:10,000 partners (e.g. Asia Miles) give the full 4 mpd',
+   blocks:'Base: each txn rounded to nearest S$1; bonus: monthly total rounded down to S$1',
+   exclusions:'Whitelist only: dining (no 5814 fast food), shopping (38 MCCs), taxis/ride-hailing 4121, gyms 7997, airlines/hotels/car rental/cruises. NOT: supermarkets 5411, SimplyGo, petrol, OTAs 4722, car rental 7512, utilities, insurance, education, government. Must be online or contactless (card tap OK); chip/swipe gets base only.',
+   notes:'8 mpd (cap S$1,200) if you keep S$50k ADB in an HSBC Everyday Global Account - edit the rules/cap if so. Cap by posting date, calendar month. Miles shown as KrisFlyer miles (x0.833) when "KrisFlyer mode" is on.',
+   source:ML+'/2026/04/08/review-hsbc-revolution-card/',verify:[]}},
+ {id:'uob_ppv',name:'UOB Preferred Platinum Visa (now "Preferred Visa")',bank:'UOB',baseLocal:0.4,baseFcy:0.4,block:5,cycle:'calendar',stmtDay:1,held:true,
+  pools:{ppvMC:{name:'Mobile contactless',cap:600},ppvOL:{name:'Selected online',cap:600}},
+  rules:[{label:'Mobile contactless in-store (Apple/Google/Samsung Pay tap, incl. SimplyGo)',cats:'all',channel:'instore',pay:'wallet',fcy:'any',mpd:4,pools:['ppvMC'],notMerchant:SMARTD,notWhy:'SMART$ merchants (e.g. Shell, SPC) earn no UNI$ on UOB Preferred'},
+         {label:'Selected online/in-app: shopping, supermarkets, dining & food delivery, entertainment/ticketing',cats:['dining','groceries','shopping','entertainment'],channel:'online',fcy:'any',mpd:4,pools:['ppvOL'],notMerchant:STREAMING,notWhy:'streaming subscriptions are not in the online MCC whitelist (7278, 7832, 7841, 7922, 7991, 7996, 7998-7999)'}],
+  zeroCats:['insurance','bills'],
+  info:{fee:'S$196.20 (first year free); UOB may auto-deduct UNI$ for the fee - request waiver',expiry:'2 years from end of the earning quarter (24-27 months)',conversion:'5,000 UNI$ = 10,000 KrisFlyer miles; S$27 per transfer; UNI$ pool across all your UOB cards (PPV, VS, Lady\'s, PRVI)',
+   blocks:'S$5 blocks per transaction (S$4.99 earns nothing)',
+   exclusions:'Tapping the PHYSICAL card = 0.4 mpd (must use phone/watch). In-app Apple/Google Pay counts as online. Online whitelist MCCs: 4816, 5262, 5306, 5309-5311, 5331, 5399, 56xx apparel, 5732-5735, 5912, 5942, 5944-5949, 5964-5970, 5992, 5999, 5811/5812/5814, 5333, 5411, 5441, 5462, 5499, 8012, 9751, 7278, 7832, 7841, 7922, 7991, 7996, 7998-7999. No air tickets/cruises/OTAs online. UOB exclusions: education, government, utilities, insurance, Amaze.',
+   notes:'Rebranded from Preferred Platinum Visa to Preferred Visa on 10 Mar 2026 - same earn rules. Two strict S$600 sub-caps per calendar month.',
+   source:ML+'/2026/03/29/review-uob-preferred-platinum-visa-card/',verify:['Exact list of SMART$ merchants excluded from UNI$ (app only checks Shell/SPC/Cathay Cineplexes by merchant name)']}},
+ {id:'uob_vs',name:'UOB Visa Signature',bank:'UOB',baseLocal:0.4,baseFcy:0.4,block:5,cycle:'statement',stmtDay:1,held:true,assumeMin:false,
+  pools:{vsFCY:{name:'Overseas (FCY)',cap:1200,min:1000},vsLOC:{name:'Local contactless + petrol + SimplyGo',cap:1200,min:1000}},
+  rules:[{label:'All FCY spend, online or in-person (needs S$1,000 FCY per statement month)',cats:'all',channel:'any',fcy:'fcy',mpd:4,pools:['vsFCY']},
+         {label:'Local contactless tap (card or phone), petrol, SimplyGo (needs S$1,000 per statement month)',cats:'all',channel:'instore',pay:'contactless',fcy:'sgd',mpd:4,pools:['vsLOC'],notMerchant:'\\bspc\\b',notWhy:'SPC is excluded'}],
+  zeroCats:['insurance','bills'],
+  info:{fee:'S$218 (first year free)',expiry:'UNI$: 2 years from end of earning quarter',conversion:'UNI$ pool (5,000 UNI$ = 10,000 KF miles, S$27)',
+   blocks:'S$5 blocks',exclusions:'Online/in-app SGD spend gets no bonus. Two separate categories each need S$1,000 minimum and cap at S$1,200 per statement month - sweet spot S$1,000-1,200. Shell & SPC officially excluded from petrol. UOB exclusions apply; Amaze excluded.',
+   notes:'"Assume min spend met" is OFF by default: bonus only counted once that category passes S$1,000 this statement month. Turn it on if you plan to hit it.',
+   source:ML+'/2026/08/10/review-uob-visa-signature-card/',verify:['Statement date (set it in card settings)']}},
+ {id:'uob_lady_sol',name:"UOB Lady's Solitaire",bank:'UOB',baseLocal:0.4,baseFcy:0.4,block:5,aggBonus:true,cycle:'calendar',stmtDay:1,held:true,options:{ladyCats:['dining','entertainment']},
+  pools:{ladyA:{name:'Bonus category 1',cap:750},ladyB:{name:'Bonus category 2',cap:750}},
+  rules:[{label:'Bonus category 1',catNot:{entertainment:{re:STREAMING,why:'streaming subscriptions are not in Lady\'s Entertainment MCCs (only bars 5813, cinemas 7832, ticketing 7922)'}},cats:['@lady0'],channel:'any',fcy:'any',mpd:4,pools:['ladyA']},
+         {label:'Bonus category 2',catNot:{entertainment:{re:STREAMING,why:'streaming subscriptions are not in Lady\'s Entertainment MCCs (only bars 5813, cinemas 7832, ticketing 7922)'}},cats:['@lady1'],channel:'any',fcy:'any',mpd:4,pools:['ladyB']}],
+  zeroCats:['insurance','bills'],
+  info:{fee:'S$414.20 (first year free); waivable',expiry:'UNI$: 24-27 months',conversion:'UNI$ pool (5,000 UNI$ = 10,000 KF miles, S$27)',
+   blocks:'Base 1X: per txn rounded down to S$5. Bonus 9X: sum of the month\'s eligible spend rounded down to S$5 once (so small txns still count)',
+   exclusions:'Dining MCCs 5811, 5812, 5814, 5499 (fast food included). Entertainment MCCs 5813 bars, 7832 cinemas, 7922 ticketing only - streaming subscriptions do NOT qualify. Works online or in-store, SGD or FCY, any payment method. Amaze, education, govt, insurance, utilities excluded.',
+   notes:'Your categories: Dining + Entertainment, S$750 cap EACH per calendar month (posting date). Other categories: Beauty & Wellness, Family, Fashion, Transport, Travel - changeable each quarter. +2/4/6 mpd extra with S$10k/50k/100k in a Lady\'s Savings Account (not modelled - edit rule mpd if you have it).',
+   source:ML+'/2026/08/18/review-uob-ladys-card-ladys-solitaire/',verify:[]}},
+ {id:'uob_prvi',name:'UOB PRVI Miles',bank:'UOB',baseLocal:1.4,baseFcy:2.4,block:5,cycle:'calendar',stmtDay:1,held:true,
+  pools:{},rules:[{label:'Regional FCY: IDR, MYR, THB, VND (uncapped)',cats:'all',channel:'any',fcy:'fcy',sea:true,mpd:3,pools:[]}],
+  zeroCats:['insurance','bills'],
+  info:{fee:'S$261.60 (first year free); no renewal miles (except AMEX at S$50k spend)',expiry:'UNI$: 2 years from end of earning quarter',conversion:'UNI$ pool (5,000 UNI$ = 10,000 KF miles, S$27)',
+   blocks:'S$5 blocks per transaction',exclusions:'UOB exclusions (education, govt, utilities, insurance, Amaze). Online purchases billed in SGD or processed in SG earn the local 1.4 mpd.',
+   notes:'Uncapped general-spend card: use once 4 mpd caps are used up. 8 mpd Agoda / up to 8 mpd Expedia hotels via the UOB landing pages (not modelled). Periodic 5 mpd overseas dining/shopping promos (last one ended 30 Jun 2026).',
+   source:ML+'/2026/07/08/review-uob-prvi-miles-card/',verify:[]}},
+ {id:'citi_prestige',name:'Citi Prestige',bank:'Citi',baseLocal:1.3,baseFcy:2.0,block:1,cycle:'calendar',stmtDay:1,held:true,pools:{},rules:[],zeroCats:['insurance'],
+  info:{fee:'S$651.82 (gives 32,000 miles each year)',expiry:'No expiry while card is open',conversion:'25,000 ThankYou pts = 10,000 KF miles; S$27.25; does NOT pool with Citi Rewards',
+   blocks:'verify',exclusions:'Citi general exclusions.',notes:'Uncapped general-spend card. Relationship bonus adds only +0.02 to +0.12 mpd (credited yearly; not modelled).',
+   source:ML+'/2026/08/22/review-citi-prestige-card/',verify:['Rounding block','Whether insurance/bills earn base points']}},
+ {id:'amaze_citi',name:'Instarem Amaze + Citi Rewards MC (in-store via Amaze)',bank:'Instarem/Citi',baseLocal:0.4,baseFcy:0.4,block:1,cycle:'statement',stmtDay:1,held:false,
+  pools:{}, sharedNote:'Uses the Citi Rewards S$1,000 cap and statement cycle',
+  rules:[{label:'Any in-store spend via Amaze (ex. travel)',cats:'all',excl:['travel'],channel:'instore',fcy:'any',mpd:4,pools:['citiR'],exclWhy:{travel:'travel MCCs are excluded by Citi even via Amaze'}}],
+  zeroCats:['insurance','bills'], feeSgdPct:1,
+  info:{fee:'Free card; 1% fee (min S$0.50) on SGD transactions; FCY via Amaze ~2% vs 3.25% bank FCY fee',expiry:'As Citi Rewards',conversion:'As Citi Rewards. Amaze Wallet (top-up) mode earns 0.5 InstaPoints/S$ on FCY (S$10 min) = ~0.17 KF mpd; linked-card mode earns no InstaPoints',
+   blocks:'S$1 (Citi)',exclusions:'Only works with Mastercards: Citi Rewards MC yes; UOB cards and DBS WWMC earn NOTHING via Amaze. Amaze does not change the MCC, so travel is still excluded.',
+   notes:'Your teal "world debit" card is Instarem Amaze. Not ticked by default - tick it if you link it to Citi Rewards Mastercard.',
+   source:ML+'/credit-cards/guide/',verify:[]}}
+];
+DEFAULT_CARDS.forEach(c=>{c.checked=CHECKED; if(c.min && c.assumeMin===undefined) c.assumeMin=true;});
+let KF_MODE=true; function setKfMode(v){KF_MODE=!!v;}
+
+/* ---------- dates & cycles ---------- */
+function pad(n){return String(n).padStart(2,'0');}
+function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function parseD(s){const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function cycleStart(card,dateStr){
+  const d=parseD(dateStr); const sd=card.cycle==='statement'?Math.min(Math.max(1,+card.stmtDay||1),28):1;
+  let y=d.getFullYear(), m=d.getMonth();
+  if(d.getDate()<sd){ m--; if(m<0){m=11;y--;} }
+  return y+'-'+pad(m+1)+'-'+pad(sd);
+}
+function cycleEnd(card,dateStr){const s=parseD(cycleStart(card,dateStr)); const e=new Date(s.getFullYear(),s.getMonth()+1,s.getDate()-1); return ymd(e);}
+
+/* ---------- pools ---------- */
+function allPools(cards){const p={}; cards.forEach(c=>Object.entries(c.pools||{}).forEach(([id,v])=>p[id]={...v,id,owner:c.id})); return p;}
+function poolCycleCard(cards,poolId){const P=allPools(cards); return cards.find(c=>c.id===(P[poolId]||{}).owner);}
+
+/* ---------- rule matching ---------- */
+function ladyCats(card){ const o=card.options||{}; return o.ladyCats||[o.ladyCat||'dining']; }
+function ruleCats(rule,card){ if(rule.cats==='all') return 'all'; return rule.cats.map(x=>x==='@ladyCat'?ladyCats(card)[0]:x==='@lady0'?ladyCats(card)[0]:x==='@lady1'?ladyCats(card)[1]:x).filter(Boolean); }
+function payOf(tx){ if(tx.channel!=='instore') return null; if(tx.pay) return tx.pay; return tx.wallet===false?'tap':'wallet'; }
+const PAYNAME={wallet:'phone/watch tap',tap:'physical card tap',chip:'chip/swipe'};
+/* returns {ok:true} or {ok:false, near:bool, reason} ; near = the category matched so the reason is a real "gotcha" */
+function ruleCheck(rule,card,tx){
+  const cat=tx.cat; const fcy=!!tx.fcy||cat==='fcy'; const no=(reason,near=true)=>({ok:false,near,reason});
+  if(rule.requires && !((card.options||{})[rule.requires])) return no('condition not met',false);
+  const cats=ruleCats(rule,card);
+  if(rule.merchant){ let m=false; try{m=new RegExp(rule.merchant,'i').test(tx.merchant||'');}catch(e){} if(!m) return no('merchant-specific',false); }
+  else if(cats!=='all' && !cats.includes(cat)) return no('no bonus for this category',false);
+  if((cat==='bills'||cat==='insurance') && !rule.allowBills) return no(cat==='bills'?'bills/utilities get no bonus':'insurance gets no bonus',false);
+  if(rule.excl && rule.excl.includes(cat)) return no((rule.exclWhy||{})[cat]||'category excluded');
+  if(rule.until && tx.date>rule.until) return no('promo ended');
+  if(rule.fcy==='fcy' && !fcy) return no('needs foreign-currency spend',cats!=='all');
+  if(rule.fcy==='sgd' && fcy) return no('SGD only',cats!=='all');
+  if(rule.sea && !tx.sea) return no('only IDR/MYR/THB/VND',false);
+  if(rule.channel==='online' && tx.channel!=='online') return no('online/in-app only');
+  if(rule.channel==='instore' && tx.channel!=='instore') return no('in-store only');
+  const pay=payOf(tx);
+  if(tx.channel==='instore' && rule.pay==='wallet' && pay!=='wallet') return no(`needs Apple/Google/Samsung Pay tap - ${PAYNAME[pay]} earns base only`);
+  if(tx.channel==='instore' && rule.pay==='contactless' && pay==='chip') return no('needs contactless (tap) - chip/swipe earns base only');
+  if(rule.noInApp && tx.channel==='online' && tx.inApp) return no('in-app Apple/Google Pay is excluded - pay with the card details instead');
+  if(rule.catNot && rule.catNot[cat]){ try{ if(new RegExp(rule.catNot[cat].re,'i').test(tx.merchant||'')) return no(rule.catNot[cat].why); }catch(e){} }
+  if(rule.notMerchant){ try{ if(new RegExp(rule.notMerchant,'i').test(tx.merchant||'')) return no(rule.notWhy||'merchant excluded'); }catch(e){} }
+  return {ok:true};
+}
+function ruleLabel(r,card){ const m={'@lady0':0,'@lady1':1}; if(Array.isArray(r.cats)&&m[r.cats[0]]!==undefined){const c=CAT[ladyCats(card)[m[r.cats[0]]]]; return "Lady's bonus: "+(c?c.name:'?');} return r.label; }
+function ruleMatches(rule,card,tx){ return ruleCheck(rule,card,tx).ok; }
+function baseRate(card,tx){ const fcy=!!tx.fcy||tx.cat==='fcy';
+  if((card.catRates||{})[tx.cat]!==undefined) return card.catRates[tx.cat];
+  if((card.zeroCats||[]).includes(tx.cat)) return 0;
+  return fcy?card.baseFcy:card.baseLocal; }
+
+/* usage: { "<poolId>|<cycleStart>": amountUsed } ; minOK(card,tx,poolId)->bool */
+function allocate(card,tx,usage,cards,minOK){
+  const blk=+card.block||1; const amt=+tx.amount||0; const blockAmt=Math.floor((amt+1e-9)/blk)*blk;
+  const base=baseRate(card,tx); const kf=(KF_MODE&&card.kfFactor)?card.kfFactor:1;
+  const checks=(card.rules||[]).map(r=>({r,c:ruleCheck(r,card,tx)}));
+  const rules=checks.filter(x=>x.c.ok).map(x=>x.r).sort((a,b)=>b.mpd-a.mpd);
+  const near=checks.find(x=>!x.c.ok&&x.c.near);
+  // bonus portion drawn from exact amount if bank aggregates bonus monthly, else from block-rounded amount
+  let left=card.aggBonus?amt:blockAmt; const parts=[]; const delta={};
+  const P=allPools(cards); let blockedByMin=null, capHit=null;
+  for(const r of rules){ if(left<=0) break;
+    const minPools=(r.pools||[]).filter(p=>P[p]&&P[p].min);
+    if((card.min && !minOK(card,tx,null)) || minPools.some(p=>!minOK(card,tx,p))){ blockedByMin=blockedByMin||{rule:r,min:card.min||P[minPools[0]].min}; continue; }
+    let room=Infinity; const keys=[];
+    for(const p of (r.pools||[])){ if(!P[p]) continue; const pc=poolCycleCard(cards,p)||card; const k=p+'|'+cycleStart(pc,tx.date); keys.push(k);
+      room=Math.min(room, Math.max(0,P[p].cap-(usage[k]||0)-(delta[k]||0))); }
+    const take=Math.min(left,room);
+    if(take<left && !capHit) capHit={rule:r,room:Math.max(0,room)};
+    if(take<=0) continue;
+    keys.forEach(k=>delta[k]=(delta[k]||0)+take);
+    const rc=ruleCats(r,card); const spec=rc==='all'?CATS.length-(r.excl||[]).length:Math.max(1,rc.length);
+    parts.push({amt:take,mpd:r.mpd,label:ruleLabel(r,card),spec}); left-=take;
+  }
+  let miles;
+  if(card.aggBonus){ // base on whole (block-rounded) amount + bonus uplift on bonus portion
+    const bonusAmt=parts.reduce((s,p)=>s+p.amt,0);
+    miles=blockAmt*base+parts.reduce((s,p)=>s+p.amt*(p.mpd-base),0);
+    const baseLeft=Math.max(0,blockAmt-bonusAmt); if(baseLeft>0) parts.push({amt:+baseLeft.toFixed(2),mpd:base,label:'Base rate'});
+  } else { if(left>0) parts.push({amt:left,mpd:base,label:'Base rate'}); miles=parts.reduce((s,p)=>s+p.amt*p.mpd,0); }
+  miles*=kf;
+  const bonusAmt=parts.filter(p=>p.label!=='Base rate').reduce((s,p)=>s+p.amt,0);
+  const spec=Math.min(99,...parts.filter(p=>p.spec).map(p=>p.spec));
+  // status for gating UI
+  let status='base', reason=null;
+  const capName=h=>{ if(!h) return 'bonus'; const pid=(h.rule.pools||[])[0]; const P=allPools(cards)[pid]; const lab=/^@lady/.test((h.rule.cats||[])[0]||'')?ruleLabel(h.rule,card):(P&&P.name)||ruleLabel(h.rule,card); return `${lab} S$${fmt(P?P.cap:0)}/${card.cycle==='statement'?'stmt':'cal'} month`; };
+  if(bonusAmt>0 && bonusAmt>=amt-blk+1e-9 && !capHit) status='bonus';
+  else if(bonusAmt>0) { status='partial'; reason=`only S$${fmt(bonusAmt)} left in cap (${capName(capHit)}) - rest at ${base} mpd`; }
+  else if(capHit && capHit.room<=0) { status='capped'; reason=`Cap reached (${capName(capHit)})`; }
+  else if(blockedByMin) { status='minspend'; reason=`Min spend S$${fmt(blockedByMin.min)} not met yet - bonus not counted`; }
+  else if(near) { status='ineligible'; reason=near.c.reason; }
+  if(base===0 && bonusAmt===0) { status='ineligible'; reason=reason||(tx.cat==='insurance'?'insurance earns no points':'excluded - earns no points'); }
+  return {spec,miles:Math.floor(miles+1e-9),parts,delta,bonusAmt,blockedByMin,capHit,matched:rules.length>0,base:+(base*kf).toFixed(2),status,reason,kf,
+    fee:(card.feeSgdPct&&!(tx.fcy||tx.cat==='fcy'))?Math.max(0.5,amt*card.feeSgdPct/100):0};
+}
+
+/* spend totals for min-spend: card-level (all spend on card in cycle) and pool-level (spend matching rules of that pool) */
+function spendTotals(state,excludeId){
+  const T={};
+  for(const tx of state.txs){ if(tx.id===excludeId) continue; const card=state.cards.find(c=>c.id===tx.card); if(!card) continue;
+    const k='card:'+card.id+'|'+cycleStart(card,tx.date); T[k]=(T[k]||0)+(+tx.amount);
+    const P=allPools(state.cards);
+    const seen=new Set();
+    (card.rules||[]).forEach(r=>{ if(ruleMatches(r,card,tx)) (r.pools||[]).forEach(p=>{ if(P[p]&&P[p].min&&!seen.has(p)){seen.add(p); const kk='pool:'+p+'|'+cycleStart(card,tx.date); T[kk]=(T[kk]||0)+(+tx.amount);} }); });
+  }
+  return T;
+}
+function poolMinFor(cards,p){const P=allPools(cards);return P[p]?P[p].min:0;}
+
+/* Ledger: chronological evaluation of logged transactions (actual min-spend status at cycle end) */
+function evalLedger(state){
+  const totals=spendTotals(state);
+  const minActual=(card,tx,p)=>{ if(p===null) return (totals['card:'+card.id+'|'+cycleStart(card,tx.date)]||0)>=card.min;
+     return (totals['pool:'+p+'|'+cycleStart(card,tx.date)]||0)>=poolMinFor(state.cards,p); };
+  const usage={}; const res={};
+  const txs=[...state.txs].sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:(a.ts||0)-(b.ts||0));
+  for(const tx of txs){
+    const card=state.cards.find(c=>c.id===tx.card);
+    if(!card){res[tx.id]={miles:0,parts:[],err:'Card not found'};continue;}
+    const r=allocate(card,tx,usage,state.cards,minActual);
+    // optimal among held cards (optimistic: assume their min spend met if assumeMin)
+    let best={card:card,miles:r.miles};
+    for(const c of state.cards.filter(c=>c.held && c.id!==card.id)){
+      const a=allocate(c,tx,usage,state.cards,(cc,t,p)=>p===null?(cc.assumeMin!==false):true);
+      if(a.miles>best.miles) best={card:c,miles:a.miles};
+    }
+    Object.entries(r.delta).forEach(([k,v])=>usage[k]=(usage[k]||0)+v);
+    res[tx.id]={...r,optimal:best.card.id,optimalMiles:best.miles,missed:Math.max(0,best.miles-r.miles),
+      pendingMin: !!r.blockedByMin};
+  }
+  return {res,usage,totals};
+}
+
+/* usage from all logged txs (optionally excluding one) */
+function currentUsage(state,excludeId){ const s={...state,txs:state.txs.filter(t=>t.id!==excludeId)}; return evalLedger(s); }
+
+/* Ranking: most miles; ties -> no extra fee, then most specialised bonus (save flexible caps), then most cap room */
+function rankCmp(a,b){ return (b.miles-a.miles) || ((a.fee>0)-(b.fee>0)) || (a.spec-b.spec) || (b.bonusAmt-a.bonusAmt); }
+/* Recommendation for a draft transaction */
+function shortName(n){return n.replace(/\s*\(.*?\)\s*/g,' ').trim();}
+function recommend(state,draft,excludeId){
+  const L=currentUsage(state,excludeId);
+  const minProj=(card,tx,p)=>{
+    if(p===null){ if(card.assumeMin!==false) return true; return ((L.totals['card:'+card.id+'|'+cycleStart(card,tx.date)]||0)+(+tx.amount))>=card.min; }
+    if(card.assumeMin!==false) return true;
+    return ((L.totals['pool:'+p+'|'+cycleStart(card,tx.date)]||0)+(+tx.amount))>=poolMinFor(state.cards,p);
+  };
+  const held=state.cards.filter(c=>c.held);
+  const list=held.map(c=>{const a=allocate(c,draft,L.usage,state.cards,minProj); return {card:c,...a,mpd:draft.amount>0?a.miles/draft.amount:0};})
+    .sort(rankCmp);
+  const out={list,msg:null,split:null};
+  if(!list.length) return out;
+  const top=list[0];
+  // Which card would win if all caps were fresh? Explain why it's not chosen now.
+  const msgs=[];
+  const fresh=held.map(c=>({c,a:allocate(c,draft,{},state.cards,minProj)}));
+  const blocked=fresh.filter(f=>f.c.id!==top.card.id && f.a.miles>=top.miles).map(f=>({f,r:list.find(x=>x.card.id===f.c.id)}))
+    .filter(x=>x.r && (x.r.status==='capped'||x.r.status==='partial') && x.r.miles<x.f.a.miles);
+  if(blocked.length){
+    msgs.push(blocked.map(x=>`${shortName(x.f.c.name)}: ${x.r.reason}`).join('. ')+`. Best now: ${shortName(top.card.name)}.`); out.blocked=blocked.map(x=>x.f.c.id);
+  } else if(top.status==='partial'){
+    msgs.push(`${top.card.name}: ${top.reason}.`);
+  }
+  const ideal=fresh.sort((x,y)=>rankCmp(x.a,y.a))[0];
+  // Split suggestion: put remaining cap room on card A, rest on best other card
+  let bestSplit=null;
+  for(const x of list){
+    if(!(x.bonusAmt>0 && x.bonusAmt<draft.amount)) continue;
+    const partA=allocate(x.card,{...draft,amount:x.bonusAmt},L.usage,state.cards,minProj);
+    const u2={...L.usage}; Object.entries(partA.delta).forEach(([k,v])=>u2[k]=(u2[k]||0)+v);
+    const rest={...draft,amount:+(draft.amount-x.bonusAmt).toFixed(2)};
+    const ob=held.filter(c=>c.id!==x.card.id).map(c=>({c,a:allocate(c,rest,u2,state.cards,minProj)})).sort((p,q)=>q.a.miles-p.a.miles)[0];
+    if(!ob) continue; const tot=partA.miles+ob.a.miles;
+    if(tot>top.miles && (!bestSplit||tot>bestSplit.miles)) bestSplit={a:x.card,amtA:x.bonusAmt,milesA:partA.miles,b:ob.c,amtB:rest.amount,milesB:ob.a.miles,miles:tot};
+  }
+  if(bestSplit){ out.split=bestSplit; msgs.push(`If the merchant lets you split: S$${fmt(bestSplit.amtA)} on ${shortName(bestSplit.a.name)} + S$${fmt(bestSplit.amtB)} on ${shortName(bestSplit.b.name)} = ${bestSplit.miles.toLocaleString('en-SG')} miles.`); }
+  out.msg=msgs.join(' ')||null;
+  return out;
+}
+
+/* Pool status for a reference date */
+function poolStatus(state,refDate){
+  const L=evalLedger(state); const P=allPools(state.cards); const out=[];
+  for(const [pid,p] of Object.entries(P)){
+    const owner=state.cards.find(c=>c.id===p.owner); if(!owner||!owner.held) continue;
+    const cs=cycleStart(owner,refDate); const used=L.usage[pid+'|'+cs]||0;
+    const minSpent=p.min?(L.totals['pool:'+pid+'|'+cs]||0):null;
+    out.push({pid,name:p.name,card:owner,cap:p.cap,used,remaining:Math.max(0,p.cap-used),pct:p.cap?used/p.cap:0,cycleStart:cs,cycleEnd:cycleEnd(owner,refDate),min:p.min||0,minSpent});
+  }
+  return out;
+}
+function cardMinStatus(state,refDate){ const L=evalLedger(state);
+  return state.cards.filter(c=>c.held&&c.min).map(c=>{const cs=cycleStart(c,refDate); return {card:c,min:c.min,spent:L.totals['card:'+c.id+'|'+cs]||0,cycleStart:cs};}); }
+
+/* Cheat sheet: best card for each category and channel, S$100 purchase, given current caps */
+function cheatSheet(state,date,amount){
+  amount=amount||100; const rows=[];
+  for(const cat of CATS){
+    const row={cat,ch:{}};
+    for(const ch of ['online','instore']){
+      const draft={amount,cat:cat.id,channel:ch,wallet:true,fcy:cat.id==='fcy',merchant:'',date};
+      const r=recommend(state,draft); row.ch[ch]=r.list.slice(0,2).map(x=>({card:x.card,mpd:x.miles/amount,miles:x.miles,capHit:x.capHit,bonusAmt:x.bonusAmt}));
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString('en-SG',{maximumFractionDigits:2});}
+
+if(typeof module!=='undefined'&&module.exports) module.exports={setKfMode,CATS,DEFAULT_CARDS,cycleStart,cycleEnd,allocate,evalLedger,recommend,poolStatus,cheatSheet,cardMinStatus,ruleMatches};
+
+/* ===== UI ===== */
+const LS_KEY='sgMilesTracker.v2';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const today=()=>ymd(new Date());
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let S=load();
+let view='add', viewMonth=today().slice(0,7), editingId=null, openCard=null;
+let draft=freshDraft(); let pickedCard=null;
+
+function freshDraft(){return {amount:'',cat:'dining',channel:'instore',pay:'wallet',inApp:false,fcy:false,sea:false,merchant:'',date:today()};}
+function load(){ let s=null; try{s=JSON.parse(localStorage.getItem(LS_KEY));}catch(e){}
+  if(!(s&&s.cards&&s.txs)){ s={version:2,cards:clone(DEFAULT_CARDS),txs:[],settings:{kf:true}};
+    try{ const old=JSON.parse(localStorage.getItem('sgMilesTracker.v1')); if(old&&old.txs&&old.txs.length) s.txs=old.txs.filter(t=>DEFAULT_CARDS.some(c=>c.id===t.card)); }catch(e){} }
+  s.settings=s.settings||{kf:true}; setKfMode(s.settings.kf!==false); return s; }
+function save(){ localStorage.setItem(LS_KEY,JSON.stringify(S)); }
+function held(){return S.cards.filter(c=>c.held);}
+function cardById(id){return S.cards.find(c=>c.id===id);}
+function toast(m){const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200);}
+function n0(x){return Math.round(x).toLocaleString('en-SG');}
+function money(x){return 'S$'+(+x).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function short(name){return name.replace(/\s*\(.*?\)\s*/g,' ').trim();}
+
+function setView(v){ view=v; document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); render(); window.scrollTo(0,0); }
+function render(){ const m=$('#main');
+  if(view==='add') m.innerHTML=viewAdd();
+  if(view==='month') m.innerHTML=viewMonthHtml();
+  if(view==='best') m.innerHTML=viewBest();
+  if(view==='cards') m.innerHTML=viewCards();
+  if(view==='data') m.innerHTML=viewData();
+  if(view==='add') updateReco();
+}
+
+/* ---------- Add / edit ---------- */
+function viewAdd(){
+  const d=draft;
+  const noCards=!held().length;
+  return `
+  ${noCards?`<div class="banner">👋 First, go to <b>Cards</b> and tick the cards you hold. <button class="link" onclick="setView('cards')">Set up cards →</button></div>`:''}
+  <div class="card">
+    <div class="row"><span class="cur">S$</span><input id="amt" class="amt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" value="${esc(d.amount)}" oninput="draft.amount=this.value;updateReco()"></div>
+    <div class="chips">${CATS.map(c=>`<button class="chip ${d.cat===c.id?'on':''}" onclick="setCat('${c.id}')">${c.icon} ${esc(c.short)}</button>`).join('')}</div>
+    <div id="bestline" class="bestline"></div>
+    <div class="seg">
+      <button class="${d.channel==='instore'?'on':''}" onclick="draft.channel='instore';render()">🏬 In-store</button>
+      <button class="${d.channel==='online'?'on':''}" onclick="draft.channel='online';render()">🌐 Online / in-app</button>
+    </div>
+    ${d.channel==='instore'?`<div class="seg seg3 small">${[['wallet','📱 Phone/watch tap'],['tap','💳 Card tap'],['chip','🔌 Chip/swipe']].map(([v,l])=>`<button class="${d.pay===v?'on':''}" onclick="draft.pay='${v}';render()">${l}</button>`).join('')}</div>`
+      :`<label class="tog"><input type="checkbox" ${d.inApp?'checked':''} onchange="draft.inApp=this.checked;updateReco()"> Paying with Apple/Google Pay inside the app/site</label>`}
+    <label class="tog"><input type="checkbox" ${d.fcy||d.cat==='fcy'?'checked':''} ${d.cat==='fcy'?'disabled':''} onchange="draft.fcy=this.checked;render()"> Foreign currency (charged in non-SGD)</label>
+    ${d.fcy||d.cat==='fcy'?`<label class="tog"><input type="checkbox" ${d.sea?'checked':''} onchange="draft.sea=this.checked;updateReco()"> Charged in IDR / MYR / THB / VND</label>`:''}
+    <div class="grid2">
+      <input placeholder="Merchant (optional, e.g. Shopee, Grab)" value="${esc(d.merchant)}" oninput="draft.merchant=this.value;updateReco()">
+      <input type="date" value="${esc(d.date)}" onchange="draft.date=this.value||today();updateReco()">
+    </div>
+  </div>
+  <div id="reco"></div>
+  <div class="btnrow">
+    <button id="saveBtn" class="primary" onclick="saveTx()">Save</button>
+    ${editingId?`<button onclick="cancelEdit()">Cancel edit</button>`:''}
+  </div>`;
+}
+function setCat(c){ draft.cat=c; const def=CAT[c].ch; if(!editingId) draft.channel=def; if(c==='fcy') draft.fcy=true; render(); }
+function draftTx(){ const f=!!draft.fcy||draft.cat==='fcy'; return {...draft,amount:+draft.amount||0,fcy:f,sea:f&&!!draft.sea,inApp:draft.channel==='online'&&!!draft.inApp,pay:draft.channel==='instore'?draft.pay:undefined}; }
+function updateReco(){
+  const box=$('#reco'); if(!box) return; const d=draftTx();
+  if(!held().length){box.innerHTML='';return;}
+  const amt=d.amount>0?d.amount:100;
+  const r=recommend(S,{...d,amount:amt},editingId);
+  if(!pickedCard || !held().some(c=>c.id===pickedCard)) pickedCard=r.list[0]&&r.list[0].card.id;
+  const minWarn=x=>{ const c=x.card; if(!c.min && !Object.values(c.pools||{}).some(p=>p.min)) return '';
+     return c.assumeMin===false?`<div class="warn">Min spend not assumed - bonus only once actual spend reaches it.</div>`:`<div class="warn">Assumes you'll meet the min spend${c.min?' (S$'+c.min+'/'+(c.cycle==='statement'?'statement':'calendar')+' month)':' (S$1,000 per category per statement month)'}.</div>`; };
+  const BADGE={bonus:['ok',''],partial:['amber','Partial cap'],capped:['red','Cap reached'],minspend:['red','Min spend not met'],ineligible:['grey','Not eligible'],base:['grey','Base rate']};
+  const row=(x,i)=>{ const bd=BADGE[x.status]||['','']; const dim=['capped','minspend','ineligible'].includes(x.status)||(x.status==='base'&&i>0);
+    return `<label class="opt ${pickedCard===x.card.id?'sel':''} ${dim?'dim':''}">
+       <input type="radio" name="pc" ${pickedCard===x.card.id?'checked':''} onchange="pickedCard='${x.card.id}';updateReco()">
+       <div class="grow"><div><b>${esc(short(x.card.name))}</b> ${i===0?'<span class="tag">BEST</span>':''} ${bd[1]&&!(i===0&&x.status==='base')?`<span class="badge ${bd[0]}">${bd[1]}</span>`:''}</div>
+       <div class="sub">${x.parts.map(p=>`S$${fmt(p.amt)} @ ${p.mpd} mpd${p.label!=='Base rate'?' ('+esc(p.label)+')':' (base)'}`).join(' + ')||'0 miles (excluded)'}${x.fee?` · ⚠️ Amaze fee ~${money(x.fee)}`:''}</div>
+       ${x.reason&&x.status!=='bonus'?`<div class="why ${bd[0]}">${esc(x.reason)}</div>`:''}
+       ${x.status==='bonus'||x.status==='partial'?minWarn(x):''}</div>
+       <div class="miles">${n0(x.miles)}<small> mi</small><br><small>${(x.miles/amt).toFixed(2)} mpd</small></div></label>`; };
+  const sp=r.split;
+  box.innerHTML=`<div class="card">
+    <div class="h3">${d.amount>0?'Best card for this purchase':'Best card (shown for S$100 - enter amount)'}</div>
+    ${r.msg?`<div class="note">💡 ${esc(r.msg.split(' If the merchant')[0])}</div>`:''}
+    ${sp?`<div class="split"><div class="h3">✂️ Recommended split (straddles a cap)</div>
+       <div class="kv"><span>${money(sp.amtA)} on <b>${esc(short(sp.a.name))}</b></span><span>${n0(sp.milesA)} mi</span></div>
+       <div class="kv"><span>${money(sp.amtB)} on <b>${esc(short(sp.b.name))}</b></span><span>${n0(sp.milesB)} mi</span></div>
+       <div class="kv"><span>Total vs ${n0(r.list[0].miles)} on one card</span><b>${n0(sp.miles)} mi</b></div>
+       <div class="sub">Only if the merchant lets you split the bill. Save it as two transactions.</div></div>`:''}
+    ${(()=>{ const bl=r.blocked||[]; const ord=[r.list[0],...r.list.filter(x=>bl.includes(x.card.id)),...r.list.slice(1).filter(x=>!bl.includes(x.card.id))];
+      return ord.slice(0,6).map((x,i)=>row(x,i)).join('')+(ord.length>6?`<details><summary>${ord.length-6} more cards</summary>${ord.slice(6).map((x,i)=>row(x,i+6)).join('')}</details>`:''); })()}
+  </div>`;
+  const bl=$('#bestline'); if(bl&&r.list[0]) bl.innerHTML=`🏆 Use <b>${esc(short(r.list[0].card.name))}</b> → ${n0(r.list[0].miles)} miles (${(r.list[0].miles/amt).toFixed(1)} mpd)${r.split?' · or split, see below':r.msg?' · see note below':''}`;
+  const sel=r.list.find(x=>x.card.id===pickedCard); const b=$('#saveBtn');
+  if(b) b.textContent=(editingId?'Update':'Save')+(d.amount>0&&sel?` ${money(d.amount)} on ${short(sel.card.name)} (+${n0(sel.miles)} mi)`:'');
+}
+function saveTx(){
+  const d=draftTx(); if(!(d.amount>0)) return toast('Enter an amount'); if(!pickedCard) return toast('Tick your cards first (Cards tab)');
+  if(editingId){ const t=S.txs.find(t=>t.id===editingId); Object.assign(t,{...d,card:pickedCard}); editingId=null; toast('Updated'); }
+  else { S.txs.push({...d,card:pickedCard,id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now()}); toast('Saved ✓'); }
+  save(); const keepDate=draft.date; draft=freshDraft(); draft.date=keepDate; pickedCard=null; render();
+}
+function editTx(id){ const t=S.txs.find(t=>t.id===id); if(!t) return; editingId=id; draft={amount:t.amount,cat:t.cat,channel:t.channel,pay:t.pay||(t.wallet===false?'tap':'wallet'),inApp:!!t.inApp,fcy:!!t.fcy,sea:!!t.sea,merchant:t.merchant||'',date:t.date}; pickedCard=t.card; setView('add'); }
+function cancelEdit(){ editingId=null; draft=freshDraft(); pickedCard=null; render(); }
+function delTx(id){ if(!confirm('Delete this transaction?')) return; S.txs=S.txs.filter(t=>t.id!==id); save(); render(); toast('Deleted'); }
+
+/* ---------- Month ---------- */
+function shiftMonth(k){ let [y,m]=viewMonth.split('-').map(Number); m+=k; if(m<1){m=12;y--;} if(m>12){m=1;y++;} viewMonth=y+'-'+pad(m); render(); }
+function refDateForMonth(){ const t=today(); if(t.slice(0,7)===viewMonth) return t; const [y,m]=viewMonth.split('-').map(Number); return ymd(new Date(y,m,0)); }
+function switchTarget(ps){
+  const rule=(ps.card.rules||[]).find(r=>(r.pools||[]).includes(ps.pid)) || (S.cards.find(c=>(c.rules||[]).some(r=>(r.pools||[]).includes(ps.pid)))||{rules:[]}).rules.find(r=>(r.pools||[]).includes(ps.pid));
+  if(!rule) return null; let cats=ruleCats(rule,ps.card); const labels={};
+  if(cats==='all'){ const c0=rule.fcy==='fcy'?'fcy':rule.channel==='online'?'shopping':'contactless'; cats=[c0]; labels[c0]=rule.fcy==='fcy'?'FCY spend':rule.channel==='online'?'online spend':'in-store tap'; }
+  const out=[];
+  for(const cat of cats.slice(0,3)){
+    const ch=rule.channel==='any'?CAT[cat].ch:rule.channel;
+    const r=recommend(S,{amount:100,cat,channel:ch,pay:'wallet',fcy:rule.fcy==='fcy'||cat==='fcy',merchant:'',date:refDateForMonth()});
+    const alt=r.list.find(x=>x.card.id!==ps.card.id && !(x.parts||[]).some(p=>(rule.pools||[]).length && p.label===ruleLabel(rule,ps.card)));
+    if(alt) out.push({cat,alt,ch,label:labels[cat]||CAT[cat].name});
+  }
+  return out;
+}
+function viewMonthHtml(){
+  const [y,m]=viewMonth.split('-').map(Number);
+  const L=evalLedger(S); const txs=S.txs.filter(t=>t.date.slice(0,7)===viewMonth).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));
+  const spend=txs.reduce((s,t)=>s+(+t.amount),0), miles=txs.reduce((s,t)=>s+((L.res[t.id]||{}).miles||0),0), missed=txs.reduce((s,t)=>s+((L.res[t.id]||{}).missed||0),0);
+  const ref=refDateForMonth(); const pools=poolStatus(S,ref); const mins=cardMinStatus(S,ref);
+  const byCard={}; txs.forEach(t=>{byCard[t.card]=byCard[t.card]||{s:0,m:0}; byCard[t.card].s+=+t.amount; byCard[t.card].m+=(L.res[t.id]||{}).miles||0;});
+  const byCat={}; txs.forEach(t=>{byCat[t.cat]=(byCat[t.cat]||0)+(+t.amount);});
+  return `
+  <div class="mswitch"><button onclick="shiftMonth(-1)">‹</button><b>${MONTHS[m-1]} ${y}</b><button onclick="shiftMonth(1)">›</button></div>
+  <div class="stats">
+    <div><small>Miles earned</small><b>${n0(miles)}</b></div>
+    <div><small>Spend</small><b>${money(spend)}</b></div>
+    <div><small>Effective mpd</small><b>${spend?(miles/spend).toFixed(2):'–'}</b></div>
+    <div><small>Miles missed vs best</small><b class="${missed?'red':''}">${n0(missed)}</b></div>
+  </div>
+  <div class="card"><div class="h3">Bonus caps <small>(as at ${esc(ref)})</small></div>
+  ${pools.length?pools.map(p=>{ const pct=Math.min(1,p.pct); const cls=p.pct>=1?'red':p.pct>=0.75?'amber':'green';
+     let msg=''; if(p.pct>=0.75){ const st=switchTarget(p)||[]; const sw=st.map(x=>`<b>${esc(short(x.alt.card.name))}</b> for ${esc(x.label)} (${(x.alt.miles/100).toFixed(1)} mpd)`).join('; ');
+       msg = p.pct>=1? `<div class="capmsg red">⛔ Cap reached${sw?', switch to '+sw:''}.</div>` : `<div class="capmsg amber">⚠️ Only ${money(p.remaining)} left${sw?'. Next: '+sw:''}.</div>`; }
+     const minLine = p.min? `<div class="sub">Min spend: ${money(p.minSpent)} / ${money(p.min)} ${p.minSpent>=p.min?'✅':'⏳ bonus pending'}</div>`:'';
+     return `<div class="cap"><div class="caphead"><span>${esc(short(p.card.name))} · ${esc(p.name)}</span><span>${money(p.used).replace('.00','')} / ${money(p.cap).replace('.00','')}</span></div>
+     <div class="bar"><i class="${cls}" style="width:${(pct*100).toFixed(1)}%"></i></div>
+     <div class="sub">${money(p.remaining)} left · ${p.card.cycle==='statement'?'statement':'calendar'} cycle ${esc(p.cycleStart)} → ${esc(p.cycleEnd)}</div>${minLine}${msg}</div>`;}).join(''):'<div class="sub">No capped cards ticked.</div>'}
+  ${mins.map(x=>`<div class="cap"><div class="caphead"><span>${esc(short(x.card.name))} · minimum spend</span><span>${money(x.spent)} / ${money(x.min)}</span></div><div class="bar"><i class="${x.spent>=x.min?'green':'amber'}" style="width:${Math.min(100,x.spent/x.min*100).toFixed(1)}%"></i></div>${x.spent<x.min?`<div class="sub">${money(x.min-x.spent)} more needed this cycle to unlock bonus miles.</div>`:''}</div>`).join('')}
+  </div>
+  ${Object.keys(byCard).length?`<div class="card"><div class="h3">By card</div>${Object.entries(byCard).sort((a,b)=>b[1].m-a[1].m).map(([id,v])=>`<div class="kv"><span>${esc(short((cardById(id)||{name:id}).name))}</span><span>${money(v.s)} · <b>${n0(v.m)} mi</b></span></div>`).join('')}
+   <div class="h3" style="margin-top:10px">By category</div>${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="kv"><span>${CAT[c]?CAT[c].icon+' '+esc(CAT[c].name):esc(c)}</span><span>${money(v)}</span></div>`).join('')}</div>`:''}
+  <div class="card"><div class="h3">Transactions (${txs.length})</div>
+  ${txs.length?txs.map(t=>{const r=L.res[t.id]||{}; const c=cardById(t.card); const opt=cardById(r.optimal);
+    return `<div class="tx"><div class="grow"><div><b>${esc(t.merchant||CAT[t.cat].name)}</b> <small>${esc(t.date.slice(8))} ${MONTHS[+t.date.slice(5,7)-1]}</small></div>
+      <div class="sub">${CAT[t.cat].icon} ${esc(CAT[t.cat].name)} · ${t.channel==='online'?'online'+(t.inApp?' (in-app wallet)':''):'in-store ('+({wallet:'phone tap',tap:'card tap',chip:'chip'}[t.pay||(t.wallet===false?'tap':'wallet')])+')'}${t.fcy?' · FCY'+(t.sea?' (SEA)':''):''} · ${esc(c?short(c.name):'?')}</div>
+      ${r.pendingMin?`<div class="warn">Bonus pending min spend</div>`:''}
+      ${r.missed>0&&opt?`<div class="warn">Best was ${esc(short(opt.name))}: +${n0(r.missed)} mi</div>`:''}</div>
+      <div class="miles">${money(t.amount)}<br><b>${n0(r.miles||0)}</b><small> mi</small></div>
+      <div class="acts"><button onclick="editTx('${t.id}')" aria-label="edit">✏️</button><button onclick="delTx('${t.id}')" aria-label="delete">🗑️</button></div></div>`;}).join(''):'<div class="sub">No transactions this month.</div>'}
+  </div>`;
+}
+
+/* ---------- Best card cheat sheet ---------- */
+function viewBest(){
+  if(!held().length) return `<div class="banner">Tick your cards in <b>Cards</b> first.</div>`;
+  const rows=cheatSheet(S,today(),100);
+  const cell=arr=>arr.length&&arr[0].miles>0?arr.map((x,i)=>`<div class="${i?'sub':''}">${i?'2nd: ':''}<b>${esc(short(x.card.name))}</b> ${x.mpd.toFixed(2)} mpd${x.bonusAmt>0&&x.bonusAmt<100?' (cap nearly used)':''}</div>`).join(''):'<div class="sub">No card earns miles</div>';
+  return `<div class="card"><div class="h3">Best card right now <small>(for a S$100 purchase today, after remaining caps)</small></div>
+  ${rows.map(r=>`<div class="best"><div class="bcat">${r.cat.icon} ${esc(r.cat.name)}</div>
+     <div class="bcols"><div><small>🌐 Online</small>${cell(r.ch.online)}</div><div><small>🏬 In-store (phone tap)</small>${cell(r.ch.instore)}</div></div></div>`).join('')}
+  <div class="sub" style="margin-top:8px">Ties at the same mpd: prefers cards without fees, then the more specialised bonus (keeps flexible caps like Citi Rewards / DBS WWMC for later). Bonus requires the merchant's MCC to qualify - check with HeyMax or the Instarem app.</div></div>`;
+}
+
+/* ---------- Cards ---------- */
+function viewCards(){
+  return `<div class="card"><div class="h3">Your cards</div><div class="sub">Tick the cards you hold. Tap a card to see/edit its rules. Data checked ${CHECKED} (MileLion, bank pages, Mainly Miles, SuiteSmile, YouTrip, Truffle). Items marked <span class="vf">verify</span> could not be confirmed.</div></div>
+  ${S.cards.map(c=>`<div class="card ccard">
+    <div class="row"><label class="tog grow" style="margin:0"><input type="checkbox" ${c.held?'checked':''} onchange="toggleHeld('${c.id}',this.checked)"> <b>${esc(c.name)}</b></label>
+    <button class="link" onclick="openCard=openCard==='${c.id}'?null:'${c.id}';render()">${openCard===c.id?'Close':'Details'}</button></div>
+    <div class="sub">${c.rules.length?c.rules.map(r=>`${r.mpd} mpd ${esc(r.label)}`).join(' · '):'General spend card'} · base ${c.baseLocal} local / ${c.baseFcy} FCY${Object.values(c.pools).length?' · caps '+Object.values(c.pools).map(p=>money(p.cap).replace('.00','')).join(' + ')+' per '+(c.cycle==='statement'?'statement':'calendar')+' month':''}${c.min?' · min S$'+c.min:''}${(c.info.verify||[]).length?' · <span class="vf">verify</span>':''}</div>
+    ${openCard===c.id?cardEditor(c):''}</div>`).join('')}
+  <div class="btnrow"><button onclick="resetCards()">Reset all card data to researched defaults</button></div>`;
+}
+function cardEditor(c){
+  const i=c.info||{}; const f=(k,v,step)=>`<label>${k}<input type="number" step="${step||'0.01'}" value="${esc(v)}" onchange="${''}"`;
+  return `<div class="editor">
+   <div class="grid2">
+    <label>Base mpd (local)<input type="number" step="0.01" value="${c.baseLocal}" onchange="setCardF('${c.id}','baseLocal',+this.value)"></label>
+    <label>Base mpd (FCY)<input type="number" step="0.01" value="${c.baseFcy}" onchange="setCardF('${c.id}','baseFcy',+this.value)"></label>
+    <label>Earning block S$<input type="number" step="1" min="1" value="${c.block}" onchange="setCardF('${c.id}','block',+this.value||1)"></label>
+    <label>Cap cycle<select onchange="setCardF('${c.id}','cycle',this.value)"><option value="calendar" ${c.cycle==='calendar'?'selected':''}>Calendar month</option><option value="statement" ${c.cycle==='statement'?'selected':''}>Statement month</option></select></label>
+    ${c.cycle==='statement'?`<label>Statement cycle starts on day<input type="number" min="1" max="28" value="${c.stmtDay}" onchange="setCardF('${c.id}','stmtDay',+this.value||1)"></label>`:''}
+    ${c.min!==undefined?`<label>Min spend S$/month<input type="number" value="${c.min}" onchange="setCardF('${c.id}','min',+this.value)"></label>`:''}
+   </div>
+   ${(c.min||Object.values(c.pools).some(p=>p.min))?`<label class="tog"><input type="checkbox" ${c.assumeMin!==false?'checked':''} onchange="setCardF('${c.id}','assumeMin',this.checked)"> In recommendations, assume I'll meet the min spend</label>`:''}
+   ${c.options&&c.options.ladyCats?`<div class="grid2">${[0,1].map(k=>`<label>Lady's bonus category ${k+1}<select onchange="setLady('${c.id}',${k},this.value)">${[['dining','Dining'],['entertainment','Entertainment'],['travel','Travel'],['transport','Transport'],['groceries','Family (groceries)'],['shopping','Fashion (shopping)'],['beauty','Beauty & Wellness']].filter(([v])=>CAT[v]).map(([v,l])=>`<option value="${v}" ${c.options.ladyCats[k]===v?'selected':''}>${l}</option>`).join('')}</select></label>`).join('')}</div><div class="sub">Your chosen categories (set with UOB each quarter). S$750 cap per category per calendar month.</div>`:''}
+   ${c.options&&c.options.siaSpendMet!==undefined?`<label class="tog"><input type="checkbox" ${c.options.siaSpendMet?'checked':''} onchange="setOpt('${c.id}','siaSpendMet',this.checked)"> I will spend S$1,000+ on SIA/Scoot/KrisShop this membership year (unlocks 2.4 mpd)</label>`:''}
+   ${Object.entries(c.pools).map(([pid,p])=>`<div class="grid2"><label>Cap: ${esc(p.name)} (S$)<input type="number" value="${p.cap}" onchange="setPool('${c.id}','${pid}','cap',+this.value)"></label>${p.min!==undefined?`<label>Min for this cap (S$)<input type="number" value="${p.min}" onchange="setPool('${c.id}','${pid}','min',+this.value)"></label>`:''}</div>`).join('')}
+   ${c.sharedNote?`<div class="sub">${esc(c.sharedNote)}</div>`:''}
+   ${c.rules.map((r,k)=>`<div class="grid2"><label>Bonus mpd: ${esc(r.label)}<input type="number" step="0.01" value="${r.mpd}" onchange="setRule('${c.id}',${k},+this.value)"></label>${r.until?`<div class="sub">Promo until ${esc(r.until)}</div>`:''}</div>`).join('')}
+   <div class="info">
+    <div><b>Annual fee:</b> ${esc(i.fee)}</div><div><b>Points expiry:</b> ${esc(i.expiry)}</div><div><b>Conversion:</b> ${esc(i.conversion)}</div>
+    <div><b>Rounding:</b> ${esc(i.blocks)}</div><div><b>Exclusions / gotchas:</b> ${esc(i.exclusions)}</div>${i.notes?`<div><b>Notes:</b> ${esc(i.notes)}</div>`:''}
+    ${(i.verify||[]).length?`<div class="vf">Verify: ${i.verify.map(esc).join('; ')}</div>`:''}
+    <div><b>Source:</b> <a href="${esc(i.source)}" target="_blank" rel="noopener">${esc(i.source)}</a> · checked ${esc(c.checked)}</div>
+   </div>
+   <details><summary>Advanced: edit raw rules (JSON)</summary><textarea id="json_${c.id}" rows="10">${esc(JSON.stringify({rules:c.rules,pools:c.pools,zeroCats:c.zeroCats,catRates:c.catRates||{}},null,1))}</textarea>
+   <button onclick="saveJson('${c.id}')">Save JSON</button></details>
+   <button class="link" onclick="resetCard('${c.id}')">Reset this card to default</button>
+  </div>`;
+}
+function toggleHeld(id,v){cardById(id).held=v; save(); pickedCard=null; render();}
+function setCardF(id,k,v){cardById(id)[k]=v; save(); render();}
+function setOpt(id,k,v){const c=cardById(id); c.options=c.options||{}; c.options[k]=v; save(); render();}
+function setLady(id,k,v){const c=cardById(id); const a=c.options.ladyCats.slice(); a[k]=v; if(a[0]===a[1]) return toast('Pick two different categories'); c.options.ladyCats=a; save(); render();}
+function setKf(v){S.settings.kf=v; setKfMode(v); save(); render();}
+function setPool(id,pid,k,v){cardById(id).pools[pid][k]=v; save(); render();}
+function setRule(id,k,v){cardById(id).rules[k].mpd=v; save(); render();}
+function saveJson(id){ try{ const o=JSON.parse($('#json_'+id).value); Object.assign(cardById(id),o); save(); toast('Saved'); render(); }catch(e){ alert('Invalid JSON: '+e.message); } }
+function resetCard(id){ const d=DEFAULT_CARDS.find(c=>c.id===id); if(!d||!confirm('Reset this card to the researched defaults?')) return; const h=cardById(id).held; Object.assign(cardById(id),clone(d),{held:h}); save(); render(); }
+function resetCards(){ if(!confirm('Reset ALL card data (keeps your ticks and transactions)?')) return; const h=Object.fromEntries(S.cards.map(c=>[c.id,c.held])); S.cards=clone(DEFAULT_CARDS).map(c=>({...c,held:!!h[c.id]})); save(); render(); }
+
+/* ---------- Data ---------- */
+function viewData(){
+  return `<div class="card"><div class="h3">Backup</div>
+   <div class="btnrow"><button class="primary" onclick="exportJson()">⬇️ Export JSON</button><button onclick="$('#imp').click()">⬆️ Import JSON</button></div>
+   <input id="imp" type="file" accept="application/json,.json" style="display:none" onchange="importFile(this.files[0])">
+   <div class="sub">Data lives only in this browser (localStorage). Export regularly, especially before clearing browser data or switching phones.</div></div>
+  <div class="card"><div class="h3">Demo</div>
+   <div class="btnrow"><button onclick="loadDemo()">Load demo data</button><button onclick="clearDemo()">Remove demo transactions</button><button class="danger" onclick="clearAll()">Delete ALL transactions</button></div>
+   <div class="sub">Demo adds 8 transactions (merchant marked "[DEMO]"). "Remove demo transactions" deletes only those.</div></div>
+  <div class="card"><div class="h3">Settings</div>
+   <label class="tog"><input type="checkbox" ${S.settings.kf!==false?'checked':''} onchange="setKf(this.checked)"> Count miles as <b>KrisFlyer</b> miles (HSBC converts 25,000 pts → 10,000 KF, so 4 mpd → 3.33 KF mpd; other cards convert 1:1)</label></div>
+  <div class="card"><div class="h3">How miles are calculated (assumptions)</div><ul class="sub">
+   <li>Each card has bonus rules (category, online/in-store, payment method, SGD/FCY, merchant keywords) and cap pools. A purchase uses the highest-mpd rule whose cap still has room. Overflow goes to the base rate, and the app suggests a split when that earns more.</li>
+   <li><b>Gates:</b> a card is greyed out with a reason when its cap is used up ("Cap reached"), its minimum spend isn't met ("Min spend not met"), or the purchase doesn't qualify ("Not eligible", e.g. a physical card tap on UOB PPV, an in-app Apple Pay payment on Citi Rewards, fast food on HSBC Revolution, Agoda/Expedia on HSBC, streaming on Lady's Entertainment).</li>
+   <li>Bonus mpd is the total rate (base + bonus). Earning blocks: UOB rounds down to S$5, Citi/HSBC/DBS to S$1 (DBS S$5 for base). HSBC and Lady's bonus are worked out on the exact amount.</li>
+   <li>Caps reset per calendar month, or per statement month from the day you set (Citi Rewards and UOB Visa Signature use statement months, so set your statement date in Cards).</li>
+   <li>UOB Visa Signature needs S$1,000 per statement month in each bucket (FCY / local contactless). Logged spend only earns the bonus once the total reaches it ("pending"). Recommendations don't assume it unless you tick that option.</li>
+   <li>Category ≠ MCC. Banks pay bonuses by merchant category code, and the app maps categories to typical MCCs. Bills/insurance earn no bonus (UOB/HSBC earn 0 on them).</li>
+   <li>Not modelled: welcome offers, Kris+/HeyMax stacking, UOB Lady's Savings boost, Citi PayAll, FCY fees (≈3.25%) and Amaze's 1% SGD fee (warning only).</li></ul></div>`;
+}
+function exportJson(){ const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='miles-tracker-backup-'+today()+'.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Exported'); }
+function importFile(f){ if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o.cards||!o.txs) throw new Error('Not a tracker backup'); if(!confirm(`Import ${o.txs.length} transactions and ${o.cards.length} cards? This replaces current data.`)) return; S=o; save(); toast('Imported'); render(); }catch(e){ alert('Import failed: '+e.message); } }; rd.readAsText(f); }
+function loadDemo(){
+  const t=today(); const ym=t.slice(0,8); const d=n=>ym+pad(Math.min(n,+t.slice(8)||1));
+  const demo=[
+   {date:d(1),merchant:'[DEMO] Shopee',cat:'shopping',channel:'online',amount:85.40,card:'citi_rewards'},
+   {date:d(2),merchant:'[DEMO] Din Tai Fung',cat:'dining',channel:'instore',pay:'wallet',amount:126.00,card:'uob_lady_sol'},
+   {date:d(2),merchant:'[DEMO] Grab ride',cat:'transport',channel:'online',amount:23.80,card:'citi_rewards'},
+   {date:d(3),merchant:'[DEMO] FairPrice',cat:'groceries',channel:'instore',pay:'wallet',amount:142.35,card:'uob_ppv'},
+   {date:d(4),merchant:'[DEMO] Scoot flight',cat:'travel',channel:'online',amount:420.00,card:'dbs_wwmc'},
+   {date:d(5),merchant:'[DEMO] SP Group bill',cat:'bills',channel:'online',amount:98.20,card:'citi_prestige'},
+   {date:d(6),merchant:'[DEMO] Golden Village',cat:'entertainment',channel:'instore',pay:'wallet',amount:39.00,card:'uob_lady_sol'},
+   {date:d(7),merchant:'[DEMO] Uniqlo Tokyo',cat:'fcy',channel:'instore',pay:'tap',fcy:true,amount:210.00,card:'uob_prvi'}];
+  demo.forEach((x,i)=>S.txs.push({fcy:false,...x,id:'demo'+i+Date.now().toString(36),ts:Date.now()+i,demo:true}));
+  save(); toast('Demo data loaded'); viewMonth=t.slice(0,7); setView('month');
+}
+function clearDemo(){ S.txs=S.txs.filter(t=>!t.demo); save(); toast('Demo removed'); render(); }
+function clearAll(){ if(!confirm('Delete ALL transactions? Export a backup first if unsure.')) return; S.txs=[]; save(); render(); }
+
+document.addEventListener('DOMContentLoaded',()=>{ view=held().length?'add':'cards'; document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view)); render(); });
+</script></body></html>
