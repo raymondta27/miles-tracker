@@ -1,62 +1,108 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b3d91"><title>SG Miles Tracker</title><style>*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f2f4f7;color:#1d2433;font-size:15px;padding-bottom:76px}
-header{background:#0b3d91;color:#fff;padding:12px 16px;position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center}header h1{font-size:17px;margin:0}header small{opacity:.8}
-main{max-width:640px;margin:0 auto;padding:10px}
-.card{background:#fff;border-radius:14px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.h3{font-weight:700;margin-bottom:8px}.h3 small{font-weight:400;color:#667}
+<!DOCTYPE html><html lang="en-SG" data-theme="auto"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3d91"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Miles">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><title>SG Miles Tracker</title>
+<script>try{var s=JSON.parse(localStorage.getItem('sgMilesTracker.v2')||'{}');if(s&&s.settings&&s.settings.theme)document.documentElement.dataset.theme=s.settings.theme;}catch(e){}</script>
+<style>:root{--bg:#f2f4f7;--surface:#fff;--surface2:#f7f8fa;--text:#16202f;--muted:#566173;--line:#e3e7ee;--line2:#cfd5df;
+--pri:#0b3d91;--pri-ink:#fff;--pri-soft:#e8efff;--pri-text:#0b3d91;--ok:#067647;--ok-bg:#ecfdf3;--ok-bar:#12b76a;--warn:#93370d;--warn-bg:#fffaeb;--warn-bar:#f5a524;
+--bad:#b42318;--bad-bg:#fef3f2;--bad-bar:#f04438;--grey-bar:#98a2b3;--blue-bar:#2e6be6;--blue-soft:#c7d7fe;--shadow:0 1px 3px rgba(16,24,40,.07);color-scheme:light}
+:root[data-theme=dark]{--bg:#0d1117;--surface:#161b24;--surface2:#1d2430;--text:#e8edf5;--muted:#a3adbd;--line:#2a3240;--line2:#3a4455;
+--pri:#2f6be0;--pri-ink:#fff;--pri-soft:#1c2a45;--pri-text:#8fb6ff;--ok:#5fe0a0;--ok-bg:#0f2a1e;--ok-bar:#32d583;--warn:#fec84b;--warn-bg:#2d2310;--warn-bar:#f5a524;
+--bad:#ff9c92;--bad-bg:#33171a;--bad-bar:#f97066;--grey-bar:#667085;--blue-bar:#5b8def;--blue-soft:#2b3b5c;--shadow:none;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root[data-theme=auto]{--bg:#0d1117;--surface:#161b24;--surface2:#1d2430;--text:#e8edf5;--muted:#a3adbd;--line:#2a3240;--line2:#3a4455;
+--pri:#2f6be0;--pri-ink:#fff;--pri-soft:#1c2a45;--pri-text:#8fb6ff;--ok:#5fe0a0;--ok-bg:#0f2a1e;--ok-bar:#32d583;--warn:#fec84b;--warn-bg:#2d2310;--warn-bar:#f5a524;
+--bad:#ff9c92;--bad-bg:#33171a;--bad-bar:#f97066;--grey-bar:#667085;--blue-bar:#5b8def;--blue-soft:#2b3b5c;--shadow:none;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.4;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+header{background:var(--pri);color:var(--pri-ink);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;gap:8px}
+:root[data-theme=dark] header{background:#111a2b}@media (prefers-color-scheme:dark){:root[data-theme=auto] header{background:#111a2b}}
+header h1{font-size:18px;margin:0}header .hbtn{background:rgba(255,255,255,.14);border:none;color:#fff;min-height:40px;padding:8px 12px;border-radius:12px;font-weight:600}
+main{max-width:640px;margin:0 auto;padding:12px}
+a{color:var(--pri-text)}
+.card{background:var(--surface);border-radius:16px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.h3{font-weight:700;font-size:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.h3 small{font-weight:400;color:var(--muted);font-size:13px}
 .row{display:flex;align-items:center;gap:8px}.grow{flex:1;min-width:0}
-.cur{font-size:22px;color:#667}.amt{font-size:30px;font-weight:700;border:none;outline:none;width:100%;padding:4px 0;background:transparent}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.chip{border:1px solid #d0d5dd;background:#fff;border-radius:18px;padding:7px 10px;font-size:13px}
-.chip.on{background:#0b3d91;color:#fff;border-color:#0b3d91}
-.seg{display:flex;border:1px solid #d0d5dd;border-radius:10px;overflow:hidden;margin:6px 0}.seg button{flex:1;border:none;background:#fff;padding:10px;font-size:14px}.seg button.on{background:#e8efff;color:#0b3d91;font-weight:700}
-.tog{display:flex;gap:8px;align-items:center;margin:8px 0;font-size:14px}.tog input{width:20px;height:20px}
-input,select,textarea{font:inherit;border:1px solid #d0d5dd;border-radius:9px;padding:9px;width:100%;background:#fff}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}label{font-size:12px;color:#556}label input,label select{margin-top:3px;font-size:15px;color:#1d2433}
-.opt{display:flex;gap:10px;align-items:flex-start;padding:9px;border:1px solid #e4e7ec;border-radius:10px;margin:6px 0;font-size:14px;color:#1d2433}.opt.sel{border-color:#0b3d91;background:#f3f6ff}.opt input{width:18px;height:18px;margin-top:2px}
-.miles{text-align:right;font-weight:700;white-space:nowrap}.miles small{font-weight:400;color:#667}
-.sub{font-size:12px;color:#667;margin-top:2px}.tag{background:#12b76a;color:#fff;font-size:10px;padding:2px 6px;border-radius:6px;vertical-align:middle}
-.note{background:#fff8e1;border-left:4px solid #f5a524;padding:8px;border-radius:8px;font-size:13px;margin-bottom:6px}
-.warn{font-size:12px;color:#b54708;margin-top:2px}.vf{color:#b54708;font-weight:600}
-.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}button{font:inherit;border:1px solid #d0d5dd;background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer}
-button.primary{background:#0b3d91;color:#fff;border-color:#0b3d91;flex:1;font-weight:700;padding:13px}button.danger{color:#d92d20;border-color:#fda29b}
-button.link{border:none;background:none;color:#0b3d91;padding:4px;font-weight:600}
-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e4e7ec;display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}nav button{flex:1;border:none;border-radius:0;background:none;padding:8px 2px;font-size:11px;color:#667}nav button b{display:block;font-size:20px}nav button.on{color:#0b3d91;font-weight:700}
-.mswitch{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mswitch b{font-size:18px}.mswitch button{padding:6px 16px;font-size:18px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}.stats div{background:#fff;border-radius:12px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}.stats small{color:#667;display:block}.stats b{font-size:20px}.red{color:#d92d20}
-.cap{margin:10px 0}.caphead{display:flex;justify-content:space-between;font-size:13px;font-weight:600;gap:6px}.bar{height:10px;background:#eaecf0;border-radius:6px;overflow:hidden;margin-top:4px}.bar i{display:block;height:100%}
-.bar i.green{background:#12b76a}.bar i.amber{background:#f5a524}.bar i.red{background:#f04438}
-.capmsg{font-size:13px;margin-top:4px;padding:6px 8px;border-radius:8px}.capmsg.red{background:#fef3f2;color:#b42318}.capmsg.amber{background:#fffaeb;color:#b54708}
-.kv{display:flex;justify-content:space-between;font-size:14px;padding:4px 0;border-bottom:1px solid #f2f4f7}
-.tx{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f2f4f7}.acts{display:flex;flex-direction:column;gap:4px}.acts button{padding:4px 7px;font-size:13px}
-.best{padding:8px 0;border-bottom:1px solid #f2f4f7}.bcat{font-weight:700;margin-bottom:4px}.bcols{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px}.bcols small{color:#667;display:block}
-.banner{background:#e8efff;padding:12px;border-radius:12px;margin-bottom:10px}
-.editor{border-top:1px solid #eaecf0;margin-top:8px;padding-top:8px}.info{font-size:12px;background:#f9fafb;padding:8px;border-radius:8px;margin:8px 0;line-height:1.5;word-break:break-word}
-textarea{font-family:monospace;font-size:12px}details summary{cursor:pointer;color:#0b3d91;font-size:13px;margin:6px 0}
-#toast{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);background:#1d2433;color:#fff;padding:10px 16px;border-radius:20px;opacity:0;transition:.25s;pointer-events:none;z-index:9}#toast.show{opacity:1}
-.bestline{background:#ecfdf3;color:#05603a;border-radius:10px;padding:9px 10px;font-size:14px;margin:4px 0 2px}.bestline:empty{display:none}
-.opt.dim{opacity:.55;background:#f6f7f9}.opt.dim.sel{opacity:.8}
-.badge{white-space:nowrap;display:inline-block;font-size:10px;padding:2px 6px;border-radius:6px;vertical-align:middle;font-weight:600;color:#fff;background:#98a2b3}
-.badge.red{background:#d92d20}.badge.amber{background:#f79009}.badge.grey{background:#98a2b3}
-.why{font-size:12px;margin-top:2px;color:#475467}.why.red{color:#b42318}.why.amber{color:#b54708}
-.split{background:#ecfdf3;border:1px solid #6ce9a6;border-radius:10px;padding:8px 10px;margin:6px 0}.split .kv{font-size:13px}
-.seg.small button{font-size:12px;padding:8px 4px}
-.paidby{margin:0 0 8px}.paidby>small{font-size:11px;color:#667;display:block;margin-bottom:3px}
-.seg4 button{font-size:11.5px;padding:8px 2px}
-.card.nc{background:#f6f7f9}.tog.repeat{font-size:13px}
-.erow{margin:8px 0}.ehead{display:flex;justify-content:space-between;font-size:13.5px;gap:8px}.ehead small{color:#667}
-.bar.thin{height:7px}.bar i.blue{background:#2e6be6}.bar i.grey{background:#98a2b3}
-.right{text-align:right}.up{color:#d92d20}.down{color:#12b76a}.red{color:#d92d20}
-input.bud{width:96px;text-align:right;padding:6px 8px}
+.cur{font-size:24px;color:var(--muted)}.amt{font-size:34px;font-weight:700;border:none!important;outline:none;width:100%;padding:4px 0;background:transparent!important;color:var(--text)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.chip{border:1px solid var(--line2);background:var(--surface);color:var(--text);border-radius:22px;padding:9px 13px;font-size:14px;min-height:42px}
+.chip.on{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)}.chip.more{color:var(--pri-text);border-style:dashed}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}.chips.scroll .chip{white-space:nowrap;flex:none}
+.seg{display:flex;border:1px solid var(--line2);border-radius:12px;overflow:hidden;margin:8px 0}.seg button{flex:1;border:none;border-radius:0;background:var(--surface);color:var(--text);padding:11px 6px;font-size:14px;min-height:44px}
+.seg button+button{border-left:1px solid var(--line)}.seg button.on{background:var(--pri-soft);color:var(--pri-text);font-weight:700}
+.tog{display:flex;gap:10px;align-items:center;margin:10px 0;font-size:15px;color:var(--text);min-height:32px}.tog input{width:22px;height:22px;flex:none;accent-color:var(--pri)}
+input,select,textarea{font:inherit;border:1px solid var(--line2);border-radius:11px;padding:11px;width:100%;background:var(--surface);color:var(--text);min-height:44px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}label{font-size:13px;color:var(--muted)}label input,label select{margin-top:4px;font-size:16px;color:var(--text)}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:11px;border:1px solid var(--line);border-radius:12px;margin:8px 0;font-size:14px;color:var(--text);background:var(--surface)}.opt.sel{border-color:var(--pri);background:var(--pri-soft)}.opt input{width:20px;height:20px;margin-top:2px;min-height:0;accent-color:var(--pri)}
+.miles{text-align:right;font-weight:700;white-space:nowrap}.miles small{font-weight:400;color:var(--muted)}
+.sub{font-size:13px;color:var(--muted);margin-top:2px}.tag{background:var(--ok-bar);color:#05290f;font-size:11px;padding:2px 7px;border-radius:6px;vertical-align:middle;font-weight:700}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn-bar);padding:9px;border-radius:10px;font-size:14px;margin-bottom:8px}
+.warn{font-size:13px;color:var(--warn);margin-top:2px}.vf{color:var(--warn);font-weight:600}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+button{font:inherit;border:1px solid var(--line2);background:var(--surface);color:var(--text);border-radius:12px;padding:11px 14px;cursor:pointer;min-height:44px}
+button.primary{background:var(--pri);color:var(--pri-ink);border-color:var(--pri);flex:1;font-weight:700;padding:14px}button.danger{color:var(--bad);border-color:var(--bad)}
+button.link{border:none;background:none;color:var(--pri-text);padding:6px 4px;font-weight:600;min-height:36px}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--pri);outline-offset:1px}
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--line);display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:none;border-radius:0;background:none;padding:8px 2px 9px;font-size:12px;color:var(--muted);min-height:58px}nav button b{display:block;font-size:22px;line-height:1.2}nav button.on{color:var(--pri-text);font-weight:700}
+nav button.addbtn b{background:var(--pri);color:#fff;width:44px;height:30px;border-radius:15px;margin:0 auto 1px;font-size:20px;line-height:30px}
+.mswitch{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.mswitch b{font-size:18px}.mswitch button{padding:6px 18px;font-size:20px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.stats div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px}.stats small{color:var(--muted);display:block;font-size:13px}.stats b{font-size:21px}
+.red{color:var(--bad)}.green{color:var(--ok)}.amber{color:var(--warn)}
+.cap{margin:12px 0}.caphead{display:flex;justify-content:space-between;font-size:14px;font-weight:600;gap:6px}.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:5px}.bar i{display:block;height:100%}
+.bar i.green{background:var(--ok-bar)}.bar i.amber{background:var(--warn-bar)}.bar i.red{background:var(--bad-bar)}.bar i.blue{background:var(--blue-bar)}.bar i.grey{background:var(--grey-bar)}
+.capmsg{font-size:14px;margin-top:5px;padding:7px 9px;border-radius:9px}.capmsg.red{background:var(--bad-bg);color:var(--bad)}.capmsg.amber{background:var(--warn-bg);color:var(--warn)}
+.kv{display:flex;justify-content:space-between;align-items:center;font-size:15px;padding:7px 0;border-bottom:1px solid var(--line);gap:8px}
+.tx{display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}.tx:last-child{border-bottom:none}.acts{display:flex;gap:4px}.acts button{padding:6px 9px;font-size:15px;min-height:40px;min-width:40px}
+.best{padding:10px 0;border-bottom:1px solid var(--line)}.bcat{font-weight:700;margin-bottom:4px}.bcols{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:14px}.bcols small{color:var(--muted);display:block}
+.banner{background:var(--pri-soft);padding:13px;border-radius:14px;margin-bottom:12px}
+.editor{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}.info{font-size:13px;background:var(--surface2);padding:9px;border-radius:10px;margin:8px 0;line-height:1.5;word-break:break-word}
+textarea{font-family:ui-monospace,monospace;font-size:13px}details summary{cursor:pointer;color:var(--pri-text);font-size:14px;margin:8px 0;font-weight:600;min-height:32px}
+#toast{position:fixed;bottom:calc(96px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#16202f;color:#fff;padding:11px 16px;border-radius:22px;opacity:0;transition:.25s;pointer-events:none;z-index:20;display:flex;gap:12px;align-items:center;max-width:92vw;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+#toast.show{opacity:1;pointer-events:auto}#toast button{background:none;border:none;color:#8fb6ff;font-weight:700;padding:0 4px;min-height:28px}
+.bestline{background:var(--ok-bg);color:var(--ok);border-radius:12px;padding:10px 11px;font-size:15px;margin:6px 0 2px}.bestline:empty{display:none}
+.opt.dim{opacity:.6;background:var(--surface2)}.opt.dim.sel{opacity:.85}
+.badge{white-space:nowrap;display:inline-block;font-size:11px;padding:2px 7px;border-radius:6px;vertical-align:middle;font-weight:700;color:#fff;background:#667085}
+.badge.red{background:#c4320a}.badge.amber{background:#b54708}.badge.grey{background:#667085}.badge.ok{background:#067647}
+.why{font-size:13px;margin-top:2px;color:var(--muted)}.why.red{color:var(--bad)}.why.amber{color:var(--warn)}
+.split{background:var(--ok-bg);border:1px solid var(--ok-bar);border-radius:12px;padding:9px 11px;margin:8px 0}.split .kv{font-size:14px}
+.seg.small button{font-size:13px;padding:9px 4px}
+.paidby{margin:0 0 8px}.paidby>small,.lbl{font-size:13px;color:var(--muted);display:block;margin:8px 0 3px}
+.seg4 button{font-size:13px;padding:9px 2px}
+.card.nc{background:var(--surface2)}.tog.repeat{font-size:14px}
+.erow{margin:10px 0}.ehead{display:flex;justify-content:space-between;font-size:15px;gap:8px}.ehead small{color:var(--muted)}
+.bar.thin{height:7px}
+.right{text-align:right}.up{color:var(--bad)}.down{color:var(--ok)}
+input.bud{width:100px;text-align:right;padding:8px}
 .trend{display:flex;gap:6px;align-items:flex-end;height:130px;padding-top:6px}
-.tcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;color:#667}
-.tcol i{display:block;width:70%;background:#c7d7fe;border-radius:5px 5px 0 0;min-height:2px}.tcol.on i{background:#0b3d91}.tcol.on span{color:#0b3d91;font-weight:700}
-.tcol small{font-size:10px;margin-bottom:2px}
-nav button{font-size:10.5px}
-.green{color:#12b76a}
+.tcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:12px;color:var(--muted)}
+.tcol i{display:block;width:70%;background:var(--blue-soft);border-radius:5px 5px 0 0;min-height:2px}.tcol.on i{background:var(--pri)}.tcol.on span{color:var(--pri-text);font-weight:700}
+.tcol small{font-size:11px;margin-bottom:2px}
+/* --- v4 additions --- */
+.hero{background:linear-gradient(135deg,#0b3d91,#2e6be6);color:#fff;border:none}.hero .sub,.hero small{color:rgba(255,255,255,.85)}
+.hero .big{font-size:32px;font-weight:800;letter-spacing:-.5px}.hero .hg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.hero .hg div{background:rgba(255,255,255,.13);border-radius:12px;padding:8px}.hero .hg b{display:block;font-size:18px}.hero .bar{background:rgba(255,255,255,.25)}.hero .bar i{background:#fff}
+.nudge{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px}.nudge:last-child{border-bottom:none}.nudge .ic{font-size:18px;line-height:1.2}
+.nudge .mini{height:6px;margin-top:5px}
+.opp{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}.opp:last-child{border-bottom:none}.opp .ic{font-size:20px}.opp b{display:block;font-size:15px}
+.empty{text-align:center;padding:26px 14px}.empty .e{font-size:44px}.empty p{color:var(--muted);margin:6px 0 14px}
+.list button.item{display:flex;width:100%;text-align:left;gap:12px;align-items:center;border:none;border-bottom:1px solid var(--line);border-radius:0;background:none;padding:14px 4px;font-size:16px}
+.list button.item:last-child{border-bottom:none}.list .item .ic{font-size:22px;width:30px;text-align:center}.list .item small{display:block;color:var(--muted);font-size:13px}.list .item .chev{color:var(--muted);margin-left:auto}
+.savebar{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom));z-index:4;background:var(--bg);padding:8px 0 4px;margin:0 -2px}
+.savebar button.primary{width:100%;font-size:16px;box-shadow:0 4px 14px rgba(11,61,145,.25)}
+.hint{background:var(--ok-bg);border:1px solid var(--ok-bar);border-radius:14px;padding:11px 12px;margin-bottom:12px;font-size:14.5px}.hint b{color:var(--ok)}
+.pill{display:inline-block;font-size:12px;padding:3px 8px;border-radius:10px;background:var(--surface2);color:var(--muted);border:1px solid var(--line);margin:2px 4px 2px 0}
+.app{padding:12px 0;border-bottom:1px solid var(--line)}.app:last-child{border-bottom:none}.app .t{font-weight:700;font-size:16px}.app p{margin:5px 0;font-size:14px}
+.pb ul{margin:4px 0 8px;padding-left:20px;font-size:14px}.pb li{margin:3px 0}.pb .do li::marker{content:'✓  ';color:var(--ok)}.pb .dont li::marker{content:'✗  ';color:var(--bad)}
+.ob{position:fixed;inset:0;background:var(--bg);z-index:30;overflow:auto;padding:calc(20px + env(safe-area-inset-top)) 16px 24px}.ob .inner{max-width:560px;margin:0 auto}
+.ob h2{font-size:24px;margin:8px 0}.ob .dots{display:flex;gap:6px;justify-content:center;margin:8px 0 14px}.ob .dots i{width:8px;height:8px;border-radius:4px;background:var(--line2)}.ob .dots i.on{background:var(--pri);width:22px}
+.steps{counter-reset:s;padding:0;list-style:none}.steps li{counter-increment:s;position:relative;padding:6px 0 6px 38px;font-size:15px}.steps li::before{content:counter(s);position:absolute;left:0;top:5px;width:26px;height:26px;border-radius:13px;background:var(--pri);color:#fff;font-weight:700;text-align:center;line-height:26px;font-size:14px}
+.catpick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}.catpick .chip{display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:14px;padding:8px 2px;font-size:12.5px;min-height:62px;gap:2px}.catpick .chip span{font-size:22px}
+.qa{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}.qa button{flex:none;font-size:14px;border-radius:14px;padding:8px 12px;text-align:left;line-height:1.25}.qa small{display:block;color:var(--muted);font-size:12px}
+
+body.v-add #toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 </style></head><body>
-<header><div><h1>✈️ SG Miles Tracker</h1><small>Raymond's card optimiser · data checked 8 Oct 2026</small></div></header>
-<main id="main"></main><div id="toast"></div>
-<nav><button data-v="add" onclick="setView('add')"><b>➕</b>Add</button><button data-v="month" onclick="setView('month')"><b>📅</b>Miles</button><button data-v="exp" onclick="setView('exp')"><b>📊</b>Expenses</button><button data-v="best" onclick="setView('best')"><b>🏆</b>Best</button><button data-v="cards" onclick="setView('cards')"><b>💳</b>Cards</button><button data-v="data" onclick="setView('data')"><b>💾</b>Data</button></nav>
+<header><h1>✈️ SG Miles</h1><button class="hbtn" onclick="setView('guide')" aria-label="How to use">? Help</button></header>
+<main id="main"></main><div id="toast" role="status" aria-live="polite"></div>
+<nav><button data-v="home" onclick="setView('home')"><b>🏠</b>Home</button><button data-v="spend" onclick="setView('spend')"><b>📊</b>Spend</button><button data-v="add" class="addbtn" onclick="newTx()"><b>＋</b>Add</button><button data-v="miles" onclick="setView('miles')"><b>✈️</b>Miles</button><button data-v="more" onclick="setView('more')"><b>☰</b>More</button></nav>
 <script>/* ===== Miles engine (pure logic, no DOM) ===== */
 const CHECKED = '2026-10-08';
 const CATS = [
@@ -389,7 +435,7 @@ function fmt(n){return (Math.round(n*100)/100).toLocaleString('en-SG',{maximumFr
 
 
 /* ===== Data model migration (in place, idempotent) ===== */
-const DATA_VERSION=3;
+const DATA_VERSION=4;
 function migrateState(s){
   s.txs=Array.isArray(s.txs)?s.txs:[];
   for(const t of s.txs){
@@ -403,6 +449,13 @@ function migrateState(s){
   if(!Array.isArray(s.settings.excludeCats)) s.settings.excludeCats=['savings'];
   if(!s.settings.budgets||typeof s.settings.budgets!=='object') s.settings.budgets={};
   if(!Array.isArray(s.recurring)) s.recurring=[];
+  // v4: onboarding, theme, remembered Add choices, statement-date confirmation, editable content overrides
+  if(s.settings.onboarded===undefined) s.settings.onboarded=!!(s.txs.length||(Array.isArray(s.cards)&&s.cards.some(c=>c.held)));
+  if(!['auto','light','dark'].includes(s.settings.theme)) s.settings.theme='auto';
+  if(!s.settings.last||typeof s.settings.last!=='object') s.settings.last={};
+  if(s.settings.saveHints===undefined) s.settings.saveHints=true;
+  if(!s.content||typeof s.content!=='object') s.content={};
+  if(Array.isArray(s.cards)) for(const c of s.cards){ if(c.cycle==='statement'&&c.stmtSet===undefined) c.stmtSet=(+c.stmtDay||1)!==1; }
   s.version=DATA_VERSION;
   return s;
 }
@@ -458,93 +511,369 @@ function cardMonthStats(state,ym,L){
   return {spend,miles,missed,mpd:spend?miles/spend:0};
 }
 
-if(typeof module!=='undefined'&&module.exports) module.exports={SOURCES,isCardTx,migrateState,applyRecurring,expenseSummary,cardMonthStats,monthTotals,ymAdd,setKfMode,CATS,DEFAULT_CARDS,cycleStart,cycleEnd,allocate,evalLedger,recommend,poolStatus,cheatSheet,cardMinStatus,ruleMatches};
+if(typeof module!=='undefined'&&module.exports) module.exports={CAT,SRC,NOBONUS_CATS,parseD,ymd,pad,fmt,SOURCES,isCardTx,migrateState,applyRecurring,expenseSummary,cardMonthStats,monthTotals,ymAdd,setKfMode,CATS,DEFAULT_CARDS,cycleStart,cycleEnd,allocate,evalLedger,recommend,poolStatus,cheatSheet,cardMinStatus,ruleMatches};
 
-/* ===== UI ===== */
-const LS_KEY='sgMilesTracker.v2';
+/* ===== Editable content: card playbook + "Save more" rebate apps (dated, sourced) =====
+   Everything here is plain data. Users can override it in More → Save more → "Edit content".
+   Figures were checked 12 Oct 2026; anything marked verify:true could not be confirmed. */
+const CONTENT_CHECKED='2026-10-12';
+const ML_='https://milelion.com';
+
+/* ---- Card playbook (HIS cards) ---- */
+const PLAYBOOK={
+ citi_rewards:{title:'Citi Rewards Mastercard',
+  do:['Use for online spend: Grab, Shopee, Lazada, HeyMax vouchers, food delivery (4 mpd).','Use in-store at fashion & department stores (clothes, shoes, bags).','Link it to Amaze for other in-store and overseas non-travel spend (4 mpd; Amaze charges 1% on SGD).','Set your statement date in Cards: the S$1,000 cap resets per STATEMENT month.'],
+  dont:['No bonus on travel (airlines, hotels, travel agents/OTAs).','No bonus when paying with Apple/Google Pay inside an app (use the card number, or Amaze).','The Citi Rewards VISA ends 15 Oct 2026 - keep using the Mastercard.','Points do not pool with Citi Prestige (separate S$27.25 transfer fees).'],
+  src:ML_+'/2026/02/27/review-citi-rewards-credit-card/'},
+ dbs_wwmc:{title:"DBS Woman's World Mastercard",
+  do:['Use for any online/in-app spend incl. flights, hotels, Agoda/Expedia and Kris+ (4 mpd).','S$1,000 cap per calendar month; above it 0.4 mpd local / 1.2 mpd FCY.','Convert DBS Points at least yearly - they expire after 12-15 months.','Annual fee S$196.20: call for a waiver at renewal.'],
+  dont:['Do not use via Amaze (earns nothing).','No points on insurance, CardUp/ipaymy, government.','Paying a hotel in person is NOT online.'],
+  src:ML_+'/2026/08/11/review-dbs-womans-world-card/'},
+ hsbc_revo:{title:'HSBC Revolution',
+  do:['Use online or contactless (phone OR card tap) for dining, selected shopping, taxis/Grab rides, gyms, airlines and hotels booked direct.','S$1,000 cap per calendar month. 4 mpd = 3.33 KrisFlyer mpd (HSBC converts 30k pts → 10k KF).','Transfers are free and instant - convert anytime.'],
+  dont:['Chip/swipe gets base only - always tap.','No bonus on fast food (MCC 5814), supermarkets, SimplyGo, petrol, OTAs (Agoda/Expedia), bills.'],
+  src:ML_+'/2026/04/08/review-hsbc-revolution-card/'},
+ uob_ppv:{title:'UOB Preferred Platinum Visa (Preferred Visa)',
+  do:['In-store: pay with phone/watch (Apple/Google/Samsung Pay) - S$600 cap/month at 4 mpd, incl. SimplyGo.','Online: shopping, groceries, dining & food delivery, entertainment, HeyMax vouchers - separate S$600 cap.','UNI$ pool with your other UOB cards (one S$27 transfer fee).'],
+  dont:['Tapping the PHYSICAL card = 0.4 mpd.','No online bonus for flights/travel agents.','SMART$ merchants earn no UNI$ (verify list).'],
+  src:ML_+'/2026/03/29/review-uob-preferred-platinum-visa-card/'},
+ uob_vs:{title:'UOB Visa Signature',
+  do:['Only worth using when you will spend S$1,000+ in ONE bucket in a statement month: (a) overseas/FCY, or (b) local contactless + petrol + SimplyGo.','Sweet spot S$1,000-1,200 per bucket (cap S$1,200).','Set the statement date in Cards so the app tracks the right month.'],
+  dont:['Below S$1,000 in a bucket everything earns 0.4 mpd.','Local online SGD spend gets no bonus. Shell/SPC excluded from petrol.'],
+  src:ML_+'/2026/08/10/review-uob-visa-signature-card/'},
+ uob_lady_sol:{title:"UOB Lady's Solitaire (Dining + Entertainment)",
+  do:['Dining (restaurants, cafes, fast food, MCC 5811/5812/5814/5499) and Entertainment (bars, cinemas, ticketing) - any payment method, SGD or FCY.','S$750 cap PER category per calendar month.','Ask for the S$414.20 fee waiver at renewal; if refused, consider downgrading to the cheaper Lady\'s Card (one category - check current terms).'],
+  dont:['Streaming subscriptions are not Entertainment.','HeyMax vouchers (MCC 5311) only earn if you pick Fashion as a category.'],
+  src:ML_+'/2026/08/18/review-uob-ladys-card-ladys-solitaire/'},
+ uob_prvi:{title:'UOB PRVI Miles',
+  do:['Default card for spend with no bonus: 1.4 mpd local, 2.4 mpd overseas, 3 mpd in IDR/MYR/THB/VND, uncapped.','Use with CardUp (Visa) for rent/tax only if ~1.6 cents per mile is worth it to you.','Ask for the S$261.60 fee waiver - UOB may auto-deduct UNI$ for the fee otherwise.'],
+  dont:['No renewal miles (Visa/Mastercard versions).'],
+  src:ML_+'/2026/07/08/review-uob-prvi-miles-card/'},
+ citi_prestige:{title:'Citi Prestige',
+  do:['Paying the S$651.82 fee gives 32,000 miles (~2.04 cents per mile) - only worth it if you value miles above that or use its hotel/lounge perks (check current terms).','Set its fee month in Cards to get a reminder to decide before renewal.'],
+  dont:['Earns less than PRVI on everyday spend (1.3 vs 1.4 local, 2.0 vs 2.4 FCY).','Before cancelling: transfer ALL ThankYou points out - they do not pool and are lost when the card closes.'],
+  src:ML_+'/2026/08/22/review-citi-prestige-card/'},
+ amaze_citi:{title:'Instarem Amaze (your teal card)',
+  do:['Link only Citi Rewards Mastercard. In-store/overseas spend then counts as online → 4 mpd.','Overseas: ~2% FX spread vs 3.25% bank FCY fee.'],
+  dont:['1% fee (min S$0.50) on SGD spend.','UOB and DBS cards earn nothing via Amaze. Travel MCCs still excluded on Citi Rewards.'],
+  src:ML_+'/2026/09/23/how-does-the-trust-freedom-card-change-my-overseas-spending-strategy/'}
+};
+const GENERAL_TIPS=[
+ {t:'Tap with your phone, not the card',d:'UOB Preferred Visa only pays 4 mpd for Apple/Google/Samsung Pay in-store. HSBC Revolution accepts card tap too, but never chip/swipe.'},
+ {t:'Check the MCC before big purchases',d:'Bonuses follow the merchant category code. Look it up in HeyMax (MCC lookup) before paying.'},
+ {t:'Know your cap months',d:'Citi Rewards and UOB Visa Signature reset per statement month; the rest per calendar month. Set statement dates in Cards.'},
+ {t:'Use the home-screen nudges',d:'They show how much 4 mpd room is left on each card and which min spends are short.'},
+ {t:'Batch your point transfers',d:'Fees: UOB S$27 (one pool for all UOB cards), Citi S$27.25 per card, DBS S$27.25, HSBC free. DBS points expire after 12-15 months, so convert those yearly.'},
+ {t:'Ask for fee waivers at renewal',d:'Your card expiry month = fee month. UOB auto-deducts UNI$ unless you ask for a cash waiver. Set fee months in Cards to get a reminder.'},
+ {t:'Stack an app on top of the card',d:'Open Kris+, HeyMax or ShopBack first, then pay with the recommended card - see Save more.'}
+];
+
+/* ---- Rebate / miles apps (free) ---- */
+const SAVE_APPS=[
+ {id:'heymax',name:'HeyMax',icon:'🦁',what:'Max Miles on online shopping via "Shop with Max" (500+ brands incl. Shopee, Lazada, Agoda, Trip.com, Booking.com, SIA) and on vouchers (Grab, foodpanda, FairPrice, Sheng Siong, Golden Village, IKEA, Courts...). Max Miles do not expire and transfer to airline/hotel partners.',
+  stack:'Voucher purchases code as MCC 5311 (department store): pay with Citi Rewards, DBS WWMC, HSBC Revolution or UOB Preferred Visa (online) for 4 mpd on top. Optional "Miles Booster": +10% price for +5 Max Miles/S$ (~1.85 cents/mile).',
+  how:'Open HeyMax → search the brand → "Shop with Max" or buy a voucher → pay with the card shown here.',
+  src:['https://help.heymax.ai/en/articles/10256213-can-i-earn-rewards-on-my-credit-card-when-i-purchase-vouchers-on-heymax',ML_+'/2026/10/09/heymax-miles-booster-buy-additional-max-miles-when-purchasing-vouchers/'],verify:'Max Miles → KrisFlyer transfer ratio/availability: check in app.'},
+ {id:'krisplus',name:'Kris+ (Singapore Airlines)',icon:'✈️',what:'Extra KrisPay miles (up to 9 mpd) at 2,000+ outlets: restaurants, retail, attractions, CDG Zig rides, Pelago. Oct 2026 "Birthday Bash": 8 mpd at 70 merchants until 31 Oct.',
+  stack:'Pay in-app with Apple/Google Pay; it codes as online and keeps the merchant MCC. Use DBS WWMC (any category) or Lady\'s for dining; Citi Rewards only via Amaze (in-app wallet is excluded).',
+  how:'Open Kris+ at the counter → pick the outlet → pay in-app → transfer KrisPay miles to KrisFlyer within 21 days (or turn on auto-transfer).',
+  src:['https://www.krisplus.com/en/sg/about-krisplus',ML_+'/2026/10/01/kris-birthday-bash-2026-earn-up-to-12-mpd-at-70-dining-and-retail-merchants/']},
+ {id:'shopback',name:'ShopBack',icon:'🛍️',what:'Cash rebates for online shopping started from ShopBack; ShopBack Pay QR and card-linked offers in physical stores.',
+  stack:'Online: tap through ShopBack, then pay with Citi Rewards / DBS WWMC as usual. ShopBack Pay counts as an online transaction. Visa quest: up to S$10 per S$100 of in-store ShopBack Pay with a linked Visa (until 28 Feb 2027).',
+  how:'Open ShopBack → shop via the merchant link (no other referral before checkout) → pay with the recommended card.',
+  src:['https://support.shopback.sg/hc/en-gb/articles/4415198857747-How-to-pay-for-your-purchase','https://sg.review.visa.com/en_sg/visa-offers-and-perks/shopback/177996'],verify:'Card-linked in-store offers may need the physical card (no mobile wallet), which loses UOB Preferred Visa\'s 4 mpd.'},
+ {id:'grab',name:'GrabCoins',icon:'🚕',what:'GrabRewards became GrabCoins (Nov 2025). Earned on rides/food regardless of payment method; 500 coins = S$1; coins expire at the end of the 6th month.',
+  stack:'Pay Grab with a 4 mpd card: Citi Rewards or DBS WWMC (online), HSBC Revolution for rides. Or buy Grab vouchers via HeyMax first.',
+  how:'Keep a card (not GrabPay wallet) as Grab payment; spend coins before they expire.',
+  src:[ML_+'/2025/11/19/grabrewards-is-now-grabcoins-stack-rebates-and-credit-card-rewards/','https://www.grab.com/sg/grabcoins/'],verify:'Standard GrabCoins earn rate per ride/order varies - check in app.'},
+ {id:'cardup',name:'CardUp / ipaymy',icon:'🏠',what:'Pay rent, income tax, insurance, school fees by card for a fee. CardUp codes: RENT230 (2.3% rent, to 31 Jan 2027), MLTAX26R (2.25% recurring income tax, to 31 Dec 2026).',
+  stack:'Use a Visa: UOB PRVI Miles (1.4 mpd) → about 1.6 cents per mile. Citi/AMEX cards are restricted on CardUp.',
+  how:'Only worth it if you value a mile above ~1.6 cents or need a welcome-bonus min spend. Otherwise bank transfer.',
+  src:[ML_+'/2026/06/13/full-list-of-cardup-promo-codes/','https://suitesmile.com/cardup-promo-codes/'],verify:'ipaymy current promo codes not confirmed.'},
+ {id:'amaze',name:'Amaze (Instarem)',icon:'💠',what:'Your teal card. Makes in-store spend look online for Citi Rewards (4 mpd); ~2% FX spread overseas.',
+  stack:'Link ONLY Citi Rewards Mastercard. 1% fee (min S$0.50) on SGD spend - roughly 0.25 cents per mile.',
+  how:'Add Citi Rewards in the Amaze app, then tap the Amaze card (or Amaze in Apple Pay).',
+  src:[ML_+'/2026/02/27/review-citi-rewards-credit-card/']},
+ {id:'ntuc',name:'FairPrice / Linkpoints',icon:'🛒',what:'Scan the FairPrice Group app or Link card to earn Linkpoints (base 0.5 per S$1 at FairPrice) and member rebates.',
+  stack:'Scan for Linkpoints, then pay with UOB Preferred Visa by phone tap (4 mpd). Or buy FairPrice vouchers on HeyMax with a 4 mpd card.',
+  how:'At checkout: scan app → pay by phone tap.',
+  src:['https://www.link.sg/discover/partner/ntuc-fairprice','https://help.fairprice.com.sg/hc/en-us/articles/55527471617689-What-happens-to-my-Linkpoints-after-31-March-2026']},
+ {id:'platform',name:'Shopee / Lazada vouchers',icon:'🏷️',what:'Free platform and shop vouchers on top of rebates.',
+  stack:'Start from HeyMax (paste product link to check eligibility) or ShopBack, apply the platform vouchers, pay with Citi Rewards or DBS WWMC.',
+  how:'Collect vouchers in-app → go back to HeyMax/ShopBack → open product → checkout.',
+  src:['https://help.heymax.ai/en/articles/10973627-shop-earn-miles-for-shopee-lazada-for-sg-users']},
+ {id:'dining_apps',name:'Chope / Burpple / Fave',icon:'🍽️',what:'Dining deals: Chope reservations & deals, Burpple Beyond 1-for-1 (paid membership), FavePay merchant cashback (locked to that merchant, expires).',
+  stack:'Pay the restaurant with UOB Lady\'s (Dining) - it pays 4 mpd on any payment method. Only pay for Burpple Beyond if you use 1-for-1 often.',
+  how:'Check the app before booking; pay with Lady\'s.',
+  src:['https://www.burpple.com/beyond','https://www.misslobang.com/article/best-cashback-apps-singapore-2026'],verify:'Burpple Beyond pricing, Chope-Dollars rate and Fave cashback terms not confirmed from official pages.'}
+];
+/* per category: which app to open first, and the line shown after saving */
+const SAVE_BY_CAT={
+ dining:{apps:['krisplus','dining_apps','heymax'],tip:'Restaurant on Kris+? Pay in Kris+ for extra KrisPay miles (8 mpd at Birthday Bash merchants till 31 Oct) - Lady\'s still earns 4 mpd.'},
+ groceries:{apps:['ntuc','heymax'],tip:'Scan FairPrice/Link app for Linkpoints, then phone-tap UOB Preferred Visa. Or buy FairPrice/Sheng Siong vouchers on HeyMax.'},
+ shopping:{apps:['heymax','shopback','platform'],tip:'Start from HeyMax "Shop with Max" or ShopBack before checkout for Max Miles/cashback on top of your card.'},
+ transport:{apps:['grab','heymax'],tip:'Grab rides earn GrabCoins on top of card miles. Buying Grab vouchers on HeyMax adds Max Miles.'},
+ travel:{apps:['heymax','shopback','krisplus'],tip:'Book Agoda/Trip.com/Booking.com via HeyMax or ShopBack, pay with DBS WWMC (4 mpd online incl. travel).'},
+ entertainment:{apps:['heymax','krisplus'],tip:'Golden Village vouchers are on HeyMax; cinema/ticketing paid directly earns 4 mpd on Lady\'s.'},
+ fcy:{apps:['amaze','krisplus'],tip:'Overseas non-travel spend: Amaze + Citi Rewards (4 mpd, ~2% FX). Visa Signature only once you pass S$1,000 FCY that statement month.'},
+ contactless:{apps:['shopback','heymax'],tip:'Phone-tap UOB Preferred Visa. For big shops, a HeyMax voucher may add Max Miles.'},
+ bills:{apps:['cardup'],tip:'Bills earn no bonus on your cards. CardUp/Citi PayAll only if ~1.6-2 cents per mile is worth it.'},
+ insurance:{apps:['cardup'],tip:'Insurance earns no points on your cards; CardUp with PRVI Visa ≈1.6 cents per mile.'},
+ rent:{apps:['cardup'],tip:'Rent by bank transfer earns nothing. CardUp RENT230 (2.3%) + UOB PRVI Visa ≈ 1.6 cents per mile - only if worth it to you.'},
+ tax:{apps:['cardup'],tip:'Income tax: CardUp MLTAX26R (2.25%, recurring) + PRVI Visa ≈ 1.6 cents per mile.'},
+ others:{apps:['heymax','shopback'],tip:'Big-ticket buy (electronics, furniture)? Check HeyMax for Courts/Best Denki/IKEA vouchers and pay with a 4 mpd card.'}
+};
+/* merchant keywords → category (quick guesses; user can change) */
+const MERCHANT_CAT=[
+ ['grabfood|foodpanda|deliveroo','dining'],['grab|gojek|tada|ryde|comfort|cdg|zig|simplygo|taxi','transport'],
+ ['shopee|lazada|amazon|taobao|zalora|shein|uniqlo|tangs|robinsons|courts|ikea|best denki|challenger|sephora|watsons','shopping'],
+ ['fairprice|ntuc|sheng siong|cold storage|giant|don don donki|redmart','groceries'],
+ ['netflix|spotify|disney|youtube|golden village|\\bgv\\b|shaw|cathay cineplex|sistic|ticketmaster','entertainment'],
+ ['sp group|singtel|starhub|\\bm1\\b|circles|myrepublic|pub ','bills'],['aia|prudential|great eastern|income insurance|fwd|singlife','insurance'],
+ ['agoda|booking\\.com|trip\\.com|expedia|singapore airlines|scoot|klook|airbnb|hotel','travel'],
+ ['landlord|rent','rent'],['iras|tax','tax'],['endowus|syfe|stashaway|tiger|moomoo|savings|invest','savings'],
+ ['mcdonald|kfc|starbucks|ya kun|toast box|din tai fung|haidilao|hawker|kopitiam|restaurant|cafe','dining']
+];
+function guessCat(merchant){ const m=(merchant||'').toLowerCase(); if(!m) return null; for(const [re,c] of MERCHANT_CAT){ try{ if(new RegExp(re).test(m)) return c; }catch(e){} } return null; }
+if(typeof module!=='undefined'&&module.exports) module.exports={CONTENT_CHECKED,PLAYBOOK,GENERAL_TIPS,SAVE_APPS,SAVE_BY_CAT,MERCHANT_CAT,guessCat};
+
+/* ===== Insights (goal A) + monthly nudges (goal B). Pure functions; node-testable ===== */
+if(typeof module!=='undefined'&&module.exports&&typeof CATS==='undefined'){ Object.assign(globalThis,require('./engine.js'),require('./content.js')); }
+const DELIVERY_RE=/grabfood|foodpanda|deliveroo|food ?delivery|grab food/i;
+const PROMOS=[ // dated, time-limited items shown as nudges until they expire
+ {id:'krisbday26',from:'2026-10-01',until:'2026-10-31',icon:'🎂',text:'Kris+ Birthday Bash: 8 mpd at 70 merchants until 31 Oct (on top of your card).',src:'https://milelion.com/2026/10/01/kris-birthday-bash-2026-earn-up-to-12-mpd-at-70-dining-and-retail-merchants/'},
+ {id:'cardup_rent',from:'2026-06-13',until:'2027-01-31',icon:'🏠',text:'CardUp RENT230: rent at 2.3% fee (≈1.6 cents/mile on PRVI Visa) until 31 Jan 2027.',src:'https://milelion.com/2026/06/13/full-list-of-cardup-promo-codes/',cats:['rent']},
+ {id:'visa_shopback',from:'2026-09-01',until:'2027-02-28',icon:'🛍️',text:'Visa x ShopBack Pay in-store quest: up to S$10 back per S$100 with a linked Visa until 28 Feb 2027.',src:'https://sg.review.visa.com/en_sg/visa-offers-and-perks/shopback/177996'}
+];
+function _cardShort(n){return String(n||'').replace(/\s*\(.*?\)\s*/g,' ').trim();}
+function _money(x){return 'S$'+Math.round(+x).toLocaleString('en-SG');}
+function _daysIn(ym){const [y,m]=ym.split('-').map(Number); return new Date(y,m,0).getDate();}
+/* month-end projection: transfers/PayNow/repeating entries are fixed; card & cash spend is extrapolated by day */
+function _projected(state,ym,day,dim,ex){ let fixed=0,vari=0; for(const t of state.txs){ if(t.date.slice(0,7)!==ym||ex.has(t.cat)) continue; if(t.recurId||t.src==='bank'||t.src==='paynow'||(CAT[t.cat]||{}).nc) fixed+=+t.amount; else vari+=+t.amount; } return fixed+vari/day*dim; }
+function merchantKey(t){ return String(t.merchant||'').replace(/\[DEMO\]\s*/i,'').trim(); }
+function _nextDay(d){ const x=parseD(d); x.setDate(x.getDate()+1); return ymd(x); }
+function _fmtD(d){ const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return (+d.slice(8))+' '+M[+d.slice(5,7)-1]; }
+
+/* insights(state, ym, todayStr) -> {summary, catTrend, merchants, opportunities} */
+function insights(state,ym,todayStr){
+  todayStr=todayStr||ymd(new Date());
+  const L=evalLedger(state); const E=expenseSummary(state,ym); const cs=cardMonthStats(state,ym,L);
+  const ex=new Set(state.settings.excludeCats||[]);
+  const isCur=todayStr.slice(0,7)===ym; const dim=_daysIn(ym); const day=isCur?Math.max(1,+todayStr.slice(8)):dim;
+  const budgets=state.settings.budgets||{}; const btot=Object.values(budgets).reduce((a,b)=>a+(+b||0),0);
+  const bused=E.rows.filter(r=>r.budget>0).reduce((a,r)=>a+r.amount,0);
+  const summary={ym,total:E.total,prev:E.prevTotal,diff:E.total-E.prevTotal,diffPct:E.prevTotal?(E.total-E.prevTotal)/E.prevTotal:null,
+    miles:cs.miles,cardSpend:cs.spend,mpd:cs.mpd,missed:cs.missed,count:E.count,excluded:E.excluded,budgetTotal:btot,budgetUsed:bused,
+    projected:isCur&&day<dim?_projected(state,ym,day,dim,ex):E.total,dayOfMonth:day,daysInMonth:dim,isCurrent:isCur};
+  // per-category trend: this month, last month, 3-month average before this month
+  const hist=[1,2,3].map(k=>monthTotals(state,ymAdd(ym,-k)).byCat);
+  const catTrend=E.rows.map(r=>{ const avg3=(hist.reduce((a,h)=>a+(h[r.cat]||0),0))/3; const months=hist.filter(h=>h[r.cat]).length;
+    return {...r,avg3,months,vsAvg:avg3?(r.amount-avg3)/avg3:null}; });
+  // top merchants
+  const mm={}; for(const t of state.txs){ if(t.date.slice(0,7)!==ym||ex.has(t.cat)) continue; const k=merchantKey(t)||((CAT[t.cat]||{}).name||t.cat); const o=mm[k.toLowerCase()]=mm[k.toLowerCase()]||{name:k,amount:0,count:0,cat:t.cat}; o.amount+=+t.amount; o.count++; }
+  const merchants=Object.values(mm).sort((a,b)=>b.amount-a.amount).slice(0,5);
+  const opp=[];
+  // 1. budgets: over, or on pace to go over
+  for(const r of E.rows.filter(r=>r.budget>0)){
+    const proj=isCur?r.amount/day*dim:r.amount;
+    if(r.amount>r.budget) opp.push({kind:'budget',sev:3,icon:'🔴',cat:r.cat,title:`${(CAT[r.cat]||{name:r.cat}).name} is ${_money(r.amount-r.budget)} over budget`,detail:`${_money(r.amount)} spent vs ${_money(r.budget)} budget.`,value:r.amount-r.budget});
+    else if(isCur&&day>=5&&proj>r.budget*1.05) opp.push({kind:'budget',sev:2,icon:'🟠',cat:r.cat,title:`${(CAT[r.cat]||{name:r.cat}).name} on pace to exceed budget`,detail:`At this pace ≈${_money(proj)} by month end vs ${_money(r.budget)}.`,value:proj-r.budget});
+  }
+  // 2. wrong card: miles missed
+  const missedTx=state.txs.filter(t=>t.date.slice(0,7)===ym&&isCardTx(t)&&(L.res[t.id]||{}).missed>0).sort((a,b)=>L.res[b.id].missed-L.res[a.id].missed);
+  if(missedTx.length){ const tot=missedTx.reduce((a,t)=>a+L.res[t.id].missed,0); const t=missedTx[0]; const opt=state.cards.find(c=>c.id===L.res[t.id].optimal);
+    opp.push({kind:'card',sev:2,icon:'💳',title:`${Math.round(tot).toLocaleString('en-SG')} miles missed on ${missedTx.length} purchase${missedTx.length>1?'s':''}`,detail:`Biggest: ${merchantKey(t)||CAT[t.cat].name} ${_money(t.amount)} - ${opt?_cardShort(opt.name):'another card'} would have earned ${Math.round(L.res[t.id].missed)} more miles${opt&&Object.values(opt.pools||{}).some(p=>p.min)?' (only once its minimum spend for that month is met)':''}.`,value:tot,miles:tot}); }
+  // 3. recurring / subscriptions
+  const subs=[]; const seen=new Set();
+  for(const r of (state.recurring||[]).filter(r=>r.active&&!ex.has(r.cat))){ subs.push({name:r.merchant||CAT[r.cat].name,amount:+r.amount}); seen.add(String(r.merchant||'').toLowerCase()); }
+  const prevM=[ymAdd(ym,-1),ymAdd(ym,-2)];
+  for(const m of merchants.concat(Object.values(mm))){ const k=m.name.toLowerCase(); if(seen.has(k)||m.count!==1) continue;
+    const same=prevM.filter(pm=>state.txs.some(t=>t.date.slice(0,7)===pm&&merchantKey(t).toLowerCase()===k&&Math.abs(+t.amount-m.amount)<=Math.max(1,m.amount*0.1)));
+    if(same.length>=1&&['entertainment','bills','others','shopping','insurance'].includes(m.cat)){ subs.push({name:m.name,amount:m.amount}); seen.add(k); } }
+  if(subs.length){ const tot=subs.reduce((a,s)=>a+s.amount,0); opp.push({kind:'subs',sev:1,icon:'🔁',title:`${subs.length} recurring charge${subs.length>1?'s':''}: ${_money(tot)}/month`,detail:subs.slice(0,5).map(s=>`${s.name} ${_money(s.amount)}`).join(' · ')+'. Cancel any you no longer use.',value:tot*12}); }
+  // 4. food delivery vs dining
+  const din=state.txs.filter(t=>t.date.slice(0,7)===ym&&t.cat==='dining'&&!ex.has('dining')); const dTot=din.reduce((a,t)=>a+(+t.amount),0);
+  const del=din.filter(t=>DELIVERY_RE.test(t.merchant||'')).reduce((a,t)=>a+(+t.amount),0);
+  if(del>=50&&dTot>0) opp.push({kind:'delivery',sev:del/dTot>0.4?2:1,icon:'🛵',title:`Food delivery ${_money(del)} (${Math.round(del/dTot*100)}% of dining)`,detail:'Delivery fees and menu mark-ups add up. Pick up / dine in, or buy Grab/foodpanda vouchers on HeyMax and pay with a 4 mpd card.',value:del});
+  // 5. non-card spend that a card could have earned on
+  const ncTx=state.txs.filter(t=>t.date.slice(0,7)===ym&&!isCardTx(t)&&!NOBONUS_CATS.includes(t.cat)&&!ex.has(t.cat)&&!(CAT[t.cat]||{}).nc);
+  const ncAmt=ncTx.reduce((a,t)=>a+(+t.amount),0);
+  if(ncAmt>=50&&state.cards.some(c=>c.held)){ let mi=0; for(const t of ncTx){ const r=recommend(state,{amount:+t.amount,cat:t.cat,channel:CAT[t.cat].ch,pay:'wallet',fcy:false,merchant:t.merchant||'',date:t.date}); mi+=(r.list[0]||{miles:0}).miles; }
+    if(mi>0) opp.push({kind:'cash',sev:1,icon:'💵',title:`${_money(ncAmt)} paid by cash/PayNow/transfer`,detail:`Where a card is accepted, the best card would have earned ≈${Math.round(mi).toLocaleString('en-SG')} miles.`,value:mi,miles:mi}); }
+  // 6. rebate-app opportunities for the top categories with spend
+  const C=state.content||{}; const BYCAT={...SAVE_BY_CAT,...(C.byCat||{})}; const APPS=Array.isArray(C.apps)?C.apps:SAVE_APPS;
+  const top=E.rows.filter(r=>r.amount>=50&&BYCAT[r.cat]).slice(0,3);
+  for(const r of top){ const s=BYCAT[r.cat]; const app=APPS.find(a=>a.id===(s.apps||[])[0]);
+    opp.push({kind:'app',sev:0,icon:app?app.icon:'💡',cat:r.cat,app:app&&app.id,title:`${(CAT[r.cat]||{}).name}: ${_money(r.amount)} - stack ${app?app.name:'an app'}`,detail:s.tip,value:r.amount*0.01}); }
+  opp.sort((a,b)=>b.sev-a.sev||b.value-a.value);
+  return {summary,catTrend,merchants,opportunities:opp,expense:E};
+}
+
+/* nudges(state, todayStr) -> [{sev, icon, text, card, action}] for the home screen */
+function nudges(state,todayStr){
+  todayStr=todayStr||ymd(new Date()); const out=[]; const held=state.cards.filter(c=>c.held);
+  if(!held.length) return [{sev:3,icon:'💳',text:'Tick the cards you hold to get recommendations.',action:'cards'}];
+  // statement dates not confirmed
+  for(const c of held.filter(c=>c.cycle==='statement'&&!c.stmtSet)) out.push({sev:2,icon:'📅',card:c.id,text:`Set the statement date for ${_cardShort(c.name)} - its cap resets per statement month.`,action:'cards'});
+  const ps=poolStatus(state,todayStr);
+  for(const p of ps){ const nm=_cardShort(p.card.name)+(ps.filter(x=>x.card.id===p.card.id).length>1?' · '+p.name:'');
+    const reset=_fmtD(_nextDay(p.cycleEnd));
+    if(p.min&&p.minSpent>0&&p.minSpent<p.min){ out.push({sev:2,icon:'⏳',card:p.card.id,pid:p.pid,text:`${nm}: ${_money(p.min-p.minSpent)} short of the ${_money(p.min)} minimum - bonus pending (resets ${reset}).`}); continue; }
+    if(p.min&&!p.minSpent) continue; // unused min-spend bucket: stay quiet
+    if(p.pct>=1) out.push({sev:2,icon:'⛔',card:p.card.id,pid:p.pid,text:`${nm}: 4 mpd cap used up until ${reset}.`,action:'miles'});
+    else if(p.used>0) out.push({sev:p.pct>=0.75?2:1,icon:p.pct>=0.75?'⚠️':'✅',card:p.card.id,pid:p.pid,text:`${nm}: ${_money(p.remaining)} left at bonus rate (resets ${reset}).`,pct:p.pct});
+    else out.push({sev:0,icon:'🟢',card:p.card.id,pid:p.pid,text:`${nm}: full ${_money(p.cap)} bonus cap available (resets ${reset}).`,pct:0});
+  }
+  for(const m of cardMinStatus(state,todayStr)) if(m.spent>0&&m.spent<m.min) out.push({sev:2,icon:'⏳',card:m.card.id,text:`${_cardShort(m.card.name)}: ${_money(m.min-m.spent)} short of the ${_money(m.min)} minimum spend.`});
+  // fee month reminders (this month or next)
+  const mo=+todayStr.slice(5,7); const nx=mo%12+1; const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  for(const c of held.filter(c=>c.feeMonth)) if(+c.feeMonth===mo||+c.feeMonth===nx) out.push({sev:2,icon:'💰',card:c.id,text:`${_cardShort(c.name)} annual fee due ${MN[c.feeMonth-1]}: call for a waiver${c.id==='citi_prestige'?' or decide whether to cancel (transfer ThankYou points first)':''}.`,action:'playbook'});
+  // DBS points expiry: quarter-end reminder
+  if(held.some(c=>c.id==='dbs_wwmc')&&[3,6,9,12].includes(mo)&&+todayStr.slice(8)>=15) out.push({sev:1,icon:'⌛',card:'dbs_wwmc',text:'DBS Points expire at quarter end (12-15 months after earning) - convert if you have 5,000+.'});
+  // budget pace
+  const ym=todayStr.slice(0,7); const dim=_daysIn(ym), day=+todayStr.slice(8); const E=expenseSummary(state,ym);
+  for(const r of E.rows.filter(r=>r.budget>0)){ if(r.amount>r.budget) out.push({sev:2,icon:'🔴',text:`${CAT[r.cat].name} is ${_money(r.amount-r.budget)} over its ${_money(r.budget)} budget.`,action:'spend'});
+    else if(r.budgetPct>=0.8) out.push({sev:1,icon:'🟠',text:`${CAT[r.cat].name}: ${_money(r.budget-r.amount)} of budget left for ${dim-day} more days.`,action:'spend'}); }
+  // dated promos
+  for(const p of PROMOS) if(todayStr>=p.from&&todayStr<=p.until&&(!p.cats||state.txs.some(t=>p.cats.includes(t.cat)&&t.date>=ymAdd(ym,-2)))) out.push({sev:0,icon:p.icon,text:p.text,src:p.src,promo:p.id});
+  return out.sort((a,b)=>b.sev-a.sev);
+}
+if(typeof module!=='undefined'&&module.exports&&typeof window==='undefined') module.exports={insights,nudges,PROMOS,merchantKey,DELIVERY_RE};
+
+/* ===== UI (v4) ===== */
+const LS_KEY='sgMilesTracker.v2'; // never change: existing users' data lives here
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=o=>JSON.parse(JSON.stringify(o));
 const today=()=>ymd(new Date());
 const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MAIN_VIEWS=['home','add','spend','miles','more'];
+const PRIMARY_CATS=['dining','groceries','shopping','transport','travel','entertainment','bills','others'];
+const PRIMARY_NC=['rent','family','savings','tax','loan','dining','groceries','others'];
 let S=load();
-let view='add', viewMonth=today().slice(0,7), editingId=null, openCard=null;
-let draft=freshDraft(); let pickedCard=null;
+let view='home', viewMonth=today().slice(0,7), editingId=null, openCard=null, showAllCats=false, lastHint=null, editBudgets=false, obStep=0;
+let draft=freshDraft(); let pickedCard=null, pickedManual=false;
 
-function freshDraft(){return {src:'card',amount:'',cat:'dining',channel:'instore',pay:'wallet',inApp:false,fcy:false,sea:false,merchant:'',date:today(),repeat:false};}
+function freshDraft(){ const l=(S&&S.settings&&S.settings.last)||{};
+  return {src:l.src||'card',amount:'',cat:l.cat||'dining',channel:l.channel||'instore',pay:l.pay||'wallet',inApp:false,fcy:false,sea:false,merchant:'',date:today(),repeat:false,catTouched:false}; }
 function isNC(){return draft.src&&draft.src!=='card';}
 function load(){ let s=null; try{s=JSON.parse(localStorage.getItem(LS_KEY));}catch(e){}
-  if(!(s&&s.cards&&s.txs)){ s={version:2,cards:clone(DEFAULT_CARDS),txs:[],settings:{kf:true}};
+  if(!(s&&s.cards&&s.txs)){ s={version:2,cards:clone(DEFAULT_CARDS),txs:[],settings:{kf:true,onboarded:false}};
     try{ const old=JSON.parse(localStorage.getItem('sgMilesTracker.v1')); if(old&&old.txs&&old.txs.length) s.txs=old.txs.filter(t=>DEFAULT_CARDS.some(c=>c.id===t.card)); }catch(e){} }
   migrateState(s); setKfMode(s.settings.kf!==false); return s; }
 function save(){ localStorage.setItem(LS_KEY,JSON.stringify(S)); }
 function held(){return S.cards.filter(c=>c.held);}
 function cardById(id){return S.cards.find(c=>c.id===id);}
-function toast(m){const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200);}
+function toast(m,act,fn){const t=$('#toast'); t.innerHTML=esc(m)+(act?` <button id="toastAct">${esc(act)}</button>`:''); if(act) $('#toastAct').onclick=()=>{t.classList.remove('show'); fn();};
+  t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),act?5000:2200);}
 function n0(x){return Math.round(x).toLocaleString('en-SG');}
 function money(x){return 'S$'+(+x).toLocaleString('en-SG',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function money0(x){return 'S$'+Math.round(+x).toLocaleString('en-SG');}
 function short(name){return name.replace(/\s*\(.*?\)\s*/g,' ').trim();}
+function catName(c){return (CAT[c]||{name:c}).name;} function catIcon(c){return (CAT[c]||{icon:'•'}).icon;}
+function content(){ const C=S.content||{}; return {apps:Array.isArray(C.apps)?C.apps:SAVE_APPS,byCat:{...SAVE_BY_CAT,...(C.byCat||{})},playbook:{...PLAYBOOK,...(C.playbook||{})},tips:Array.isArray(C.tips)?C.tips:GENERAL_TIPS}; }
+function applyTheme(){ document.documentElement.dataset.theme=S.settings.theme||'auto'; }
 
-function setView(v){ view=v; document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); render(); window.scrollTo(0,0); }
-function render(){ const m=$('#main');
-  if(view==='add') m.innerHTML=viewAdd();
-  if(view==='month') m.innerHTML=viewMonthHtml();
-  if(view==='best') m.innerHTML=viewBest();
-  if(view==='cards') m.innerHTML=viewCards();
-  if(view==='data') m.innerHTML=viewData();
-  if(view==='exp') m.innerHTML=viewExpenses();
-  if(view==='add') updateReco();
+function setView(v){ view=v; document.body.className='v-'+v; const nv=MAIN_VIEWS.includes(v)?v:'more'; document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===nv)); render(); window.scrollTo(0,0); }
+function render(){ const m=$('#main'); const V={home:viewHome,add:viewAdd,spend:viewSpend,exp:viewSpend,miles:viewMiles,month:viewMiles,more:viewMore,cards:viewCards,data:viewData,best:viewBest,playbook:viewPlaybook,save:viewSave,guide:viewGuide};
+  m.innerHTML=(V[view]||viewHome)(); if(view==='add') updateReco(); renderOb(); }
+function backBar(title){ return `<div class="mswitch"><button onclick="setView('more')" aria-label="Back">‹</button><b>${esc(title)}</b><span style="width:52px"></span></div>`; }
+
+/* ---------- Home ---------- */
+function frequentMerchants(n){ const since=ymd(new Date(Date.now()-120*864e5)); const m={};
+  for(const t of S.txs){ if(t.date<since) continue; const k=merchantKey(t); if(!k) continue; const kk=k.toLowerCase(); const o=m[kk]=m[kk]||{name:k,count:0,last:t}; o.count++; if(t.date>=o.last.date) o.last=t; }
+  return Object.values(m).filter(x=>x.count>=2||x.last.recurId).sort((a,b)=>b.count-a.count||(b.last.date>a.last.date?1:-1)).slice(0,n||6); }
+function quickAdd(name){ const f=frequentMerchants(20).find(x=>x.name===name); if(!f) return; const t=f.last; editingId=null;
+  draft={...freshDraft(),src:t.src||'card',cat:t.cat,channel:t.channel||CAT[t.cat].ch,pay:t.pay||'wallet',inApp:!!t.inApp,fcy:!!t.fcy,sea:!!t.sea,merchant:merchantKey(t),amount:'',catTouched:true}; pickedCard=null; pickedManual=false; setView('add'); setTimeout(()=>{const a=$('#amt'); if(a){a.placeholder=(+t.amount).toFixed(2); a.focus();}},50); }
+function qaHtml(){ const f=frequentMerchants(8); if(!f.length) return '';
+  return `<div class="qa">${f.map(x=>`<button onclick="quickAdd('${esc(x.name).replace(/'/g,'&#39;')}')">${catIcon(x.last.cat)} ${esc(x.name)}<small>last ${money0(x.last.amount)}</small></button>`).join('')}</div>`; }
+function nudgeHtml(n){ return `<div class="nudge"><span class="ic">${n.icon}</span><div class="grow">${esc(n.text)}${n.pct!==undefined&&n.pct>0?`<div class="bar mini"><i class="${barCls(n.pct)}" style="width:${Math.min(100,n.pct*100).toFixed(0)}%"></i></div>`:''}${n.src?` <a href="${esc(n.src)}" target="_blank" rel="noopener">source</a>`:''}</div>${n.action?`<button class="link" onclick="setView('${n.action}')">Open</button>`:''}</div>`; }
+function viewHome(){
+  const ym=today().slice(0,7); const [y,m]=ym.split('-').map(Number);
+  const anyTx=S.txs.length>0;
+  if(!anyTx) return `<div class="card empty"><div class="e">✈️</div><h2 style="margin:4px 0">Welcome, Raymond</h2>
+     <p>Log a purchase and the app tells you which card earns the most miles, tracks your caps and shows where your money goes.</p>
+     <div class="btnrow"><button class="primary" onclick="setView('add')">➕ Add first expense</button></div>
+     <div class="btnrow"><button style="flex:1" onclick="loadDemo()">Try with demo data</button><button style="flex:1" onclick="obStep=0;S.settings.onboarded=false;render()">Setup guide</button></div></div>
+     ${held().length?nudgesCard(nudges(S,today()),4):''}`;
+  const I=insights(S,ym,today()); const s=I.summary;
+  const bpct=s.budgetTotal?s.budgetUsed/s.budgetTotal:null;
+  const recent=[...S.txs].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0)).slice(0,4); const L=evalLedger(S);
+  const ops=I.opportunities.slice(0,3);
+  return `<div class="card hero"><div class="sub">${MONTHS[m-1]} ${y} · spent so far</div><div class="big">${money(s.total)}</div>
+     <div class="sub">${s.prev?MONTHS[(m+10)%12]+' total '+money0(s.prev):'No data for last month'}${s.isCurrent&&s.projected>s.total+1?' · on pace for '+money0(s.projected):''}</div>
+     <div class="hg"><div><small>Miles</small><b>${n0(s.miles)}</b></div><div><small>Avg mpd</small><b>${s.cardSpend?s.mpd.toFixed(2):'–'}</b></div><div><small>Missed</small><b>${n0(s.missed)}</b></div></div>
+     ${bpct!==null?`<div class="sub" style="margin-top:10px">Budgets: ${money0(s.budgetUsed)} of ${money0(s.budgetTotal)} (${Math.round(bpct*100)}%)</div><div class="bar"><i style="width:${Math.min(100,bpct*100).toFixed(0)}%"></i></div>`:`<div class="sub" style="margin-top:10px"><button class="link" style="color:#fff;padding:0" onclick="editBudgets=true;setView('spend')">Set monthly budgets →</button></div>`}</div>
+   <div class="btnrow" style="margin-top:-2px"><button class="primary" onclick="newTx()">➕ Add expense</button></div>
+   ${qaHtml()?`<div class="card"><div class="h3">Quick add <small>your frequent merchants</small></div>${qaHtml()}</div>`:''}
+   ${nudgesCard(nudges(S,today()),5)}
+   ${ops.length?`<div class="card"><div class="h3">Ways to optimise <button class="link" onclick="setView('spend')">See all</button></div>${ops.map(oppHtml).join('')}</div>`:''}
+   <div class="card"><div class="h3">Recent <button class="link" onclick="setView('spend')">All transactions</button></div>${recent.map(t=>txRow(t,L)).join('')}</div>`;
 }
+function nudgesCard(list,n){ if(!list.length) return ''; const top=list.filter(x=>x.sev>=1).slice(0,n); const rest=list.filter(x=>!top.includes(x));
+  return `<div class="card"><div class="h3">This month <small>caps & reminders</small></div>${top.length?top.map(nudgeHtml).join(''):'<div class="sub">All good - nothing urgent.</div>'}
+   ${rest.length?`<details><summary>${rest.length} more (caps still free, promos)</summary>${rest.map(nudgeHtml).join('')}</details>`:''}</div>`; }
+function oppHtml(o){ return `<div class="opp"><span class="ic">${o.icon}</span><div class="grow"><b>${esc(o.title)}</b><div class="sub">${esc(o.detail)}</div>
+  ${o.kind==='app'?`<button class="link" onclick="saveCat='${o.cat}';setView('save')">How to stack →</button>`:o.kind==='budget'?`<button class="link" onclick="editBudgets=true;setView('spend')">Adjust budget →</button>`:o.kind==='card'?`<button class="link" onclick="setView('miles')">Best card per category →</button>`:''}</div></div>`; }
+function newTx(){ editingId=null; draft=freshDraft(); pickedCard=null; pickedManual=false; lastHint=null; setView('add'); setTimeout(()=>{const a=$('#amt'); if(a) a.focus();},50); }
 
 /* ---------- Add / edit ---------- */
 function viewAdd(){
-  const d=draft;
-  const noCards=!held().length;
-  return `
-  ${noCards?`<div class="banner">👋 First, go to <b>Cards</b> and tick the cards you hold. <button class="link" onclick="setView('cards')">Set up cards →</button></div>`:''}
+  const d=draft; const noCards=!held().length; const nc=isNC();
+  const prim=nc?PRIMARY_NC:PRIMARY_CATS;
+  let cats=(showAllCats?(nc?[...CATS.filter(c=>c.nc),...CATS.filter(c=>!c.nc&&c.id!=='fcy'&&c.id!=='contactless')]:CATS).map(c=>c.id):prim);
+  if(!cats.includes(d.cat)) cats=[...cats.slice(0,7),d.cat];
+  const det=d.fcy||d.cat==='fcy'||d.date!==today()||d.repeat||editingId;
+  return `${lastHint&&!editingId?hintHtml(lastHint):''}
+  ${noCards?`<div class="banner">👋 First tick the cards you hold. <button class="link" onclick="setView('cards')">Set up cards →</button></div>`:''}
+  ${editingId?`<div class="banner">✏️ Editing a transaction <button class="link" onclick="cancelEdit()">Cancel</button></div>`:''}
   <div class="card">
-    <div class="row"><span class="cur">S$</span><input id="amt" class="amt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" value="${esc(d.amount)}" oninput="draft.amount=this.value;updateReco()"></div>
-    <div class="paidby"><small>Paid by</small><div class="seg seg4 small">${SOURCES.map(x=>`<button class="${(d.src||'card')===x.id?'on':''}" onclick="setSrc('${x.id}')">${x.icon} ${esc(x.name)}</button>`).join('')}</div></div>
-    <div class="chips">${(isNC()?[...CATS.filter(c=>c.nc),...CATS.filter(c=>!c.nc&&c.id!=='fcy'&&c.id!=='contactless')]:CATS).map(c=>`<button class="chip ${d.cat===c.id?'on':''}" onclick="setCat('${c.id}')">${c.icon} ${esc(c.short)}</button>`).join('')}</div>
-    <div id="bestline" class="bestline"></div>
-    ${isNC()?'':`<div class="seg">
+    <div class="row"><span class="cur">S$</span><input id="amt" class="amt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" aria-label="Amount" value="${esc(d.amount)}" oninput="draft.amount=this.value;updateReco()"></div>
+    ${!editingId&&qaHtml()?`<span class="lbl">Quick add</span>${qaHtml()}`:''}
+    <span class="lbl">Paid by</span><div class="seg seg4">${SOURCES.map(x=>`<button class="${(d.src||'card')===x.id?'on':''}" onclick="setSrc('${x.id}')">${x.icon} ${esc(x.name)}</button>`).join('')}</div>
+    <span class="lbl">Category</span>
+    <div class="catpick">${cats.slice(0,showAllCats?99:8).map(c=>`<button class="chip ${d.cat===c?'on':''}" onclick="setCat('${c}')"><span>${catIcon(c)}</span>${esc((CAT[c]||{short:c}).short)}</button>`).join('')}</div>
+    <button class="link" onclick="showAllCats=!showAllCats;render()">${showAllCats?'Fewer categories':'More categories (foreign, bills, insurance…)'}</button>
+    <input placeholder="${nc?'Payee / note (e.g. Landlord, Mum)':'Merchant (e.g. Grab, Shopee) - optional'}" aria-label="Merchant" value="${esc(d.merchant)}" oninput="draft.merchant=this.value;updateReco()" onchange="merchantGuess(this.value)" style="margin-top:6px">
+    ${nc?'':`<div class="seg">
       <button class="${d.channel==='instore'?'on':''}" onclick="draft.channel='instore';render()">🏬 In-store</button>
-      <button class="${d.channel==='online'?'on':''}" onclick="draft.channel='online';render()">🌐 Online / in-app</button>
-    </div>
-    ${d.channel==='instore'?`<div class="seg seg3 small">${[['wallet','📱 Phone/watch tap'],['tap','💳 Card tap'],['chip','🔌 Chip/swipe']].map(([v,l])=>`<button class="${d.pay===v?'on':''}" onclick="draft.pay='${v}';render()">${l}</button>`).join('')}</div>`
-      :`<label class="tog"><input type="checkbox" ${d.inApp?'checked':''} onchange="draft.inApp=this.checked;updateReco()"> Paying with Apple/Google Pay inside the app/site</label>`}
-    <label class="tog"><input type="checkbox" ${d.fcy||d.cat==='fcy'?'checked':''} ${d.cat==='fcy'?'disabled':''} onchange="draft.fcy=this.checked;render()"> Foreign currency (charged in non-SGD)</label>
-    ${d.fcy||d.cat==='fcy'?`<label class="tog"><input type="checkbox" ${d.sea?'checked':''} onchange="draft.sea=this.checked;updateReco()"> Charged in IDR / MYR / THB / VND</label>`:''}`}
-    <div class="grid2">
-      <input placeholder="${isNC()?'Payee / note (e.g. Landlord, Mum)':'Merchant (optional, e.g. Shopee, Grab)'}" value="${esc(d.merchant)}" oninput="draft.merchant=this.value;updateReco()">
-      <input type="date" value="${esc(d.date)}" onchange="draft.date=this.value||today();updateReco()">
-    </div>
-    <label class="tog repeat"><input type="checkbox" ${d.repeat?'checked':''} onchange="draft.repeat=this.checked"> 🔁 Repeat monthly (auto-adds on the same day each month, e.g. rent; each one stays editable/deletable)</label>
+      <button class="${d.channel==='online'?'on':''}" onclick="draft.channel='online';render()">🌐 Online / in-app</button></div>
+    ${d.channel==='instore'?`<div class="seg seg3 small">${[['wallet','📱 Phone tap'],['tap','💳 Card tap'],['chip','🔌 Chip/swipe']].map(([v,l])=>`<button class="${d.pay===v?'on':''}" onclick="draft.pay='${v}';render()">${l}</button>`).join('')}</div>`
+      :`<label class="tog"><input type="checkbox" ${d.inApp?'checked':''} onchange="draft.inApp=this.checked;updateReco()"> Paid with Apple/Google Pay inside the app</label>`}`}
+    <div id="bestline" class="bestline"></div>
+    <details ${det?'open':''}><summary>Date${nc?'':', foreign currency'}, repeat${d.date!==today()?' · '+esc(d.date):''}</summary>
+      <label>Date<input type="date" value="${esc(d.date)}" onchange="draft.date=this.value||today();updateReco()"></label>
+      ${nc?'':`<label class="tog"><input type="checkbox" ${d.fcy||d.cat==='fcy'?'checked':''} ${d.cat==='fcy'?'disabled':''} onchange="draft.fcy=this.checked;render()"> Foreign currency (charged in non-SGD)</label>
+      ${d.fcy||d.cat==='fcy'?`<label class="tog"><input type="checkbox" ${d.sea?'checked':''} onchange="draft.sea=this.checked;updateReco()"> Charged in IDR / MYR / THB / VND</label>`:''}`}
+      <label class="tog repeat"><input type="checkbox" ${d.repeat?'checked':''} onchange="draft.repeat=this.checked"> 🔁 Repeat monthly (e.g. rent, subscriptions)</label>
+    </details>
   </div>
   <div id="reco"></div>
-  <div class="btnrow">
-    <button id="saveBtn" class="primary" onclick="saveTx()">Save</button>
-    ${editingId?`<button onclick="cancelEdit()">Cancel edit</button>`:''}
-  </div>`;
+  <div class="savebar"><button id="saveBtn" class="primary" onclick="saveTx()">Save</button></div>`;
 }
-function setSrc(v){ draft.src=v; if(v!=='card'){ if(!editingId && (draft.cat==='dining'||draft.cat==='fcy'||draft.cat==='contactless')) draft.cat=v==='bank'?'rent':v==='paynow'?'family':'others'; } render(); }
-function setCat(c){ draft.cat=c; const def=CAT[c].ch; if(!editingId) draft.channel=def; if(c==='fcy') draft.fcy=true; render(); }
+function hintHtml(h){ return `<div class="hint">💡 <b>Save more on ${esc(catName(h.cat))}:</b> ${esc(h.tip)}
+  <div><button class="link" onclick="saveCat='${h.cat}';setView('save')">Apps & how-to →</button><button class="link" onclick="lastHint=null;render()">Dismiss</button><button class="link" onclick="S.settings.saveHints=false;save();lastHint=null;render();toast('Tips after saving turned off (More → Settings)')">Don't show</button></div></div>`; }
+function merchantGuess(v){ draft.merchant=v; if(draft.catTouched) return updateReco(); const g=guessCat(v); if(g&&g!==draft.cat){ if(CAT[g].nc&&!isNC()){ updateReco(); return; } draft.cat=g; if(!editingId) draft.channel=CAT[g].ch; render(); toast('Category set to '+catName(g)+' - tap another to change'); } else updateReco(); }
+function setSrc(v){ pickedManual=false; draft.src=v; const c=draft.cat, nc=CAT[c].nc;
+  if(v!=='card'&&!editingId&&!nc){ if(v==='bank') draft.cat='rent'; else if(v==='paynow'&&!['dining','groceries','others'].includes(c)) draft.cat='family'; else if(['fcy','contactless'].includes(c)) draft.cat='others'; }
+  if(v==='card'&&nc) draft.cat='dining'; render(); }
+function setCat(c){ pickedManual=false; draft.cat=c; draft.catTouched=true; const def=CAT[c].ch; if(!editingId) draft.channel=def; if(c==='fcy') draft.fcy=true; render(); }
 function draftTx(){ if(isNC()) return {src:draft.src,amount:+draft.amount||0,cat:draft.cat,channel:'online',fcy:false,merchant:draft.merchant,date:draft.date,card:null};
-  const f=!!draft.fcy||draft.cat==='fcy'; return {...draft,amount:+draft.amount||0,fcy:f,sea:f&&!!draft.sea,inApp:draft.channel==='online'&&!!draft.inApp,pay:draft.channel==='instore'?draft.pay:undefined}; }
+  const f=!!draft.fcy||draft.cat==='fcy'; const {catTouched,...dd}=draft; return {...dd,amount:+draft.amount||0,fcy:f,sea:f&&!!draft.sea,inApp:draft.channel==='online'&&!!draft.inApp,pay:draft.channel==='instore'?draft.pay:undefined}; }
 function updateReco(){
   const box=$('#reco'); if(!box) return; const d=draftTx();
-  if(isNC()){ const sv=SRC[draft.src]; box.innerHTML=`<div class="card nc"><div class="h3">${sv.icon} ${esc(sv.name)}</div><div class="sub">Earns 0 miles. Not counted in card caps, minimum spend, effective mpd or "miles missed" - it only shows in <b>Expenses</b>.${(S.settings.excludeCats||[]).includes(d.cat)?' This category is excluded from expense totals (change in Data → Expenses settings).':''}</div></div>`;
+  if(isNC()){ const sv=SRC[draft.src]; box.innerHTML=`<div class="card nc"><div class="h3">${sv.icon} ${esc(sv.name)}</div><div class="sub">Earns 0 miles. Not counted in card caps, minimum spend, effective mpd or "miles missed" - it only shows in <b>Expenses</b>.${(S.settings.excludeCats||[]).includes(d.cat)?' This category is excluded from expense totals (change in More → Backup & settings).':''}</div></div>`;
     const bl=$('#bestline'); if(bl) bl.innerHTML=''; const b=$('#saveBtn'); if(b) b.textContent=(editingId?'Update':'Save')+(d.amount>0?` ${money(d.amount)} via ${sv.name}`:''); return; }
   if(!held().length){box.innerHTML='';return;}
   const amt=d.amount>0?d.amount:100;
   const r=recommend(S,{...d,amount:amt},editingId);
-  if(!pickedCard || !held().some(c=>c.id===pickedCard)) pickedCard=r.list[0]&&r.list[0].card.id;
+  if(!pickedManual || !pickedCard || !held().some(c=>c.id===pickedCard)) pickedCard=r.list[0]&&r.list[0].card.id;
   const minWarn=x=>{ const c=x.card; if(!c.min && !Object.values(c.pools||{}).some(p=>p.min)) return '';
      return c.assumeMin===false?`<div class="warn">Min spend not assumed - bonus only once actual spend reaches it.</div>`:`<div class="warn">Assumes you'll meet the min spend${c.min?' (S$'+c.min+'/'+(c.cycle==='statement'?'statement':'calendar')+' month)':' (S$1,000 per category per statement month)'}.</div>`; };
   const BADGE={bonus:['ok',''],partial:['amber','Partial cap'],capped:['red','Cap reached'],minspend:['red','Min spend not met'],ineligible:['grey','Not eligible'],base:['grey','Base rate']};
   const row=(x,i)=>{ const bd=BADGE[x.status]||['','']; const dim=['capped','minspend','ineligible'].includes(x.status)||(x.status==='base'&&i>0);
     return `<label class="opt ${pickedCard===x.card.id?'sel':''} ${dim?'dim':''}">
-       <input type="radio" name="pc" ${pickedCard===x.card.id?'checked':''} onchange="pickedCard='${x.card.id}';updateReco()">
+       <input type="radio" name="pc" ${pickedCard===x.card.id?'checked':''} onchange="pickedCard='${x.card.id}';pickedManual=true;updateReco()">
        <div class="grow"><div><b>${esc(short(x.card.name))}</b> ${i===0?'<span class="tag">BEST</span>':''} ${bd[1]&&!(i===0&&x.status==='base')?`<span class="badge ${bd[0]}">${bd[1]}</span>`:''}</div>
        <div class="sub">${x.parts.map(p=>`S$${fmt(p.amt)} @ ${p.mpd} mpd${p.label!=='Base rate'?' ('+esc(p.label)+')':' (base)'}`).join(' + ')||'0 miles (excluded)'}${x.fee?` · ⚠️ Amaze fee ~${money(x.fee)}`:''}</div>
        ${x.reason&&x.status!=='bonus'?`<div class="why ${bd[0]}">${esc(x.reason)}</div>`:''}
@@ -552,7 +881,7 @@ function updateReco(){
        <div class="miles">${n0(x.miles)}<small> mi</small><br><small>${(x.miles/amt).toFixed(2)} mpd</small></div></label>`; };
   const sp=r.split;
   box.innerHTML=`<div class="card">
-    <div class="h3">${d.amount>0?'Best card for this purchase':'Best card (shown for S$100 - enter amount)'}</div>
+    <div class="h3">${d.amount>0?'Card ranking':'Card ranking <small>for S$100 - enter amount</small>'}</div>
     ${r.msg?`<div class="note">💡 ${esc(r.msg.split(' If the merchant')[0])}</div>`:''}
     ${sp?`<div class="split"><div class="h3">✂️ Recommended split (straddles a cap)</div>
        <div class="kv"><span>${money(sp.amtA)} on <b>${esc(short(sp.a.name))}</b></span><span>${n0(sp.milesA)} mi</span></div>
@@ -560,23 +889,92 @@ function updateReco(){
        <div class="kv"><span>Total vs ${n0(r.list[0].miles)} on one card</span><b>${n0(sp.miles)} mi</b></div>
        <div class="sub">Only if the merchant lets you split the bill. Save it as two transactions.</div></div>`:''}
     ${(()=>{ const bl=r.blocked||[]; const ord=[r.list[0],...r.list.filter(x=>bl.includes(x.card.id)),...r.list.slice(1).filter(x=>!bl.includes(x.card.id))];
-      return ord.slice(0,6).map((x,i)=>row(x,i)).join('')+(ord.length>6?`<details><summary>${ord.length-6} more cards</summary>${ord.slice(6).map((x,i)=>row(x,i+6)).join('')}</details>`:''); })()}
+      const nTop=Math.max(2,1+bl.length); return ord.slice(0,nTop).map((x,i)=>row(x,i)).join('')+(ord.length>nTop?`<details><summary>Compare all ${ord.length} cards</summary>${ord.slice(nTop).map((x,i)=>row(x,i+nTop)).join('')}</details>`:''); })()}
   </div>`;
   const bl=$('#bestline'); if(bl&&r.list[0]) bl.innerHTML=`🏆 Use <b>${esc(short(r.list[0].card.name))}</b> → ${n0(r.list[0].miles)} miles (${(r.list[0].miles/amt).toFixed(1)} mpd)${r.split?' · or split, see below':r.msg?' · see note below':''}`;
   const sel=r.list.find(x=>x.card.id===pickedCard); const b=$('#saveBtn');
-  if(b) b.textContent=(editingId?'Update':'Save')+(d.amount>0&&sel?` ${money(d.amount)} on ${short(sel.card.name)} (+${n0(sel.miles)} mi)`:'');
+  if(b) b.textContent=(editingId?'Update':'Save')+(sel?` ${d.amount>0?money(d.amount)+' ':''}on ${short(sel.card.name)}${d.amount>0?` (+${n0(sel.miles)} mi)`:''}`:'');
 }
+let saveCat=null;
 function saveTx(){
-  const d=draftTx(); if(!(d.amount>0)) return toast('Enter an amount');
-  const nc=isNC(); if(!nc && !pickedCard) return toast('Tick your cards first (Cards tab)');
+  const d=draftTx(); if(!(d.amount>0)){ const a=$('#amt'); if(a&&a.placeholder&&a.placeholder!=='0.00'){ draft.amount=a.placeholder; return saveTx(); } return toast('Enter an amount'); }
+  const nc=isNC(); if(!nc && !pickedCard) return toast('Tick your cards first (More → Cards)');
   const rec={...d,src:nc?draft.src:'card',card:nc?null:pickedCard};
-  let t;
+  let t; const wasEdit=!!editingId;
   if(editingId){ t=S.txs.find(t=>t.id===editingId); const keep={id:t.id,ts:t.ts,recurId:t.recurId,auto:t.auto,demo:t.demo};
-    Object.keys(t).forEach(k=>delete t[k]); Object.assign(t,rec,keep); Object.keys(t).forEach(k=>t[k]===undefined&&delete t[k]); editingId=null; toast('Updated'); }
-  else { t={...rec,id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now()}; S.txs.push(t); toast('Saved ✓'); }
+    Object.keys(t).forEach(k=>delete t[k]); Object.assign(t,rec,keep); Object.keys(t).forEach(k=>t[k]===undefined&&delete t[k]); editingId=null; }
+  else { t={...rec,id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now()}; S.txs.push(t); }
   syncRecurring(t,!!draft.repeat);
-  save(); const keepDate=draft.date, keepSrc=draft.src; draft=freshDraft(); draft.date=keepDate; if(keepSrc!=='card'){ draft.src=keepSrc; draft.cat=keepSrc==='bank'?'rent':keepSrc==='paynow'?'family':'others'; } pickedCard=null; render();
+  S.settings.last={src:rec.src,cat:rec.cat,channel:draft.channel,pay:draft.pay};
+  save(); const keepDate=draft.date; const c=cardById(t.card);
+  const H=content().byCat[t.cat]; lastHint=(!wasEdit&&S.settings.saveHints!==false&&H&&H.tip)?{cat:t.cat,tip:H.tip}:null;
+  draft=freshDraft(); if(keepDate!==today()) draft.date=keepDate; pickedCard=null; pickedManual=false; showAllCats=false;
+  if(wasEdit){ toast('Updated'); setView('spend'); return; }
+  const id=t.id; toast(`Saved ${money(t.amount)}${c?' on '+short(c.name):''} ✓`,'Undo',()=>{ S.txs=S.txs.filter(x=>x.id!==id); save(); render(); toast('Removed'); });
+  render(); window.scrollTo(0,0);
 }
+
+/* ---------- Miles (caps, by card, best card cheat sheet) ---------- */
+function viewMiles(){ return viewMonthHtml()+`<details class="card" ${held().length?'':'open'}><summary style="font-size:16px">🏆 Best card per category (right now)</summary>${viewBest()}</details>`; }
+
+/* ---------- Spend (expenses + insights) ---------- */
+function viewSpend(){
+  const I=insights(S,viewMonth,today()); const L=evalLedger(S);
+  const txs=S.txs.filter(t=>t.date.slice(0,7)===viewMonth).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));
+  const maxM=Math.max(1,...I.merchants.map(x=>x.amount));
+  const ins=`${I.opportunities.length?`<div class="card"><div class="h3">💡 What can be optimised</div>${I.opportunities.map(oppHtml).join('')}</div>`:''}
+   ${I.merchants.length?`<div class="card"><div class="h3">Top merchants</div>${I.merchants.map(x=>`<div class="erow"><div class="ehead"><span>${catIcon(x.cat)} ${esc(x.name)} <small>×${x.count}</small></span><b>${money(x.amount)}</b></div><div class="bar thin"><i class="blue" style="width:${(x.amount/maxM*100).toFixed(0)}%"></i></div></div>`).join('')}<div class="sub">Merchant name as typed when adding. Entries without a merchant are grouped by category.</div></div>`:''}
+   ${I.catTrend.some(r=>r.avg3>0)?`<div class="card"><div class="h3">Category trend <small>vs your 3-month average</small></div>${I.catTrend.filter(r=>r.amount||r.avg3).map(r=>`<div class="kv"><span>${catIcon(r.cat)} ${esc(catName(r.cat))}</span><span>${money0(r.amount)} <small class="sub">avg ${money0(r.avg3)}</small> ${r.vsAvg===null?'':`<b class="${r.vsAvg>0.15?'up':r.vsAvg<-0.15?'down':''}">${r.vsAvg>0?'▲':'▼'}${Math.abs(r.vsAvg*100).toFixed(0)}%</b>`}</span></div>`).join('')}</div>`:''}`;
+  return viewExpenses(ins)+`<div class="card"><div class="h3">Transactions (${txs.length})</div>${txs.length?txs.map(t=>txRow(t,L)).join(''):`<div class="empty"><div class="e">🧾</div><p>Nothing logged for this month.</p><button class="primary" onclick="newTx()">➕ Add expense</button></div>`}</div>`;
+}
+
+/* ---------- More ---------- */
+function viewMore(){ const it=(v,ic,t,s,fn)=>`<button class="item" onclick="${fn||`setView('${v}')`}"><span class="ic">${ic}</span><span>${t}<small>${s}</small></span><span class="chev">›</span></button>`;
+  return `<div class="card list">
+   ${it('playbook','🧭','Card playbook','Do\'s & don\'ts for each of your cards, fee & expiry tips')}
+   ${it('save','🎁','Save more apps','HeyMax, Kris+, ShopBack, Grab… what to open first')}
+   ${it('cards','💳','Cards',`${held().length} cards ticked · statement dates, fee months, rules`)}
+   ${it('data','💾','Backup & settings','Export / import, theme, demo data, expense settings')}
+   ${it('guide','❓','How to use','Install on iPhone, 10-second add, reading the advice')}
+   ${it('','🚀','Run setup again','Cards, statement dates, budgets',"obStep=0;S.settings.onboarded=false;render()")}</div>
+   <div class="sub" style="text-align:center">Card data checked ${CHECKED} · app content checked ${CONTENT_CHECKED}. Data stays on this phone.</div>`; }
+
+function viewPlaybook(){ const C=content(); const hs=held();
+  return backBar('Card playbook')+`<div class="card"><div class="h3">Golden rules</div>${C.tips.map(t=>`<div class="nudge"><span class="ic">⭐</span><div><b>${esc(t.t)}</b><div class="sub">${esc(t.d)}</div></div></div>`).join('')}</div>
+   ${hs.length?'':'<div class="banner">Tick your cards in Cards to see their playbook.</div>'}
+   ${hs.map(c=>{ const p=C.playbook[c.id]; const i=c.info||{}; if(!p) return '';
+     return `<div class="card pb"><div class="h3">${esc(p.title||c.name)}</div>
+      <div class="sub"><b>Do</b></div><ul class="do">${(p.do||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+      <div class="sub"><b>Don't</b></div><ul class="dont">${(p.dont||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+      <div class="info"><div><b>Fee:</b> ${esc(i.fee)}</div><div><b>Points expiry:</b> ${esc(i.expiry)}</div><div><b>Transfer:</b> ${esc(i.conversion)}</div></div>
+      <div class="row"><label class="grow">Annual fee month (for a reminder)<select onchange="setCardF('${c.id}','feeMonth',+this.value||undefined)"><option value="">Not set</option>${MONTHS.map((m,k)=>`<option value="${k+1}" ${+c.feeMonth===k+1?'selected':''}>${m}</option>`).join('')}</select></label></div>
+      <div class="sub">Source: <a href="${esc(p.src||i.source)}" target="_blank" rel="noopener">${esc((p.src||i.source||'').replace(/^https?:\/\//,'').slice(0,60))}</a></div></div>`; }).join('')}`; }
+
+function viewSave(){ const C=content(); const cats=Object.keys(C.byCat).filter(c=>CAT[c]); const cur=saveCat&&C.byCat[saveCat]?saveCat:null;
+  const appCard=a=>`<div class="app" id="app_${esc(a.id)}"><div class="t">${a.icon||''} ${esc(a.name)}</div><p>${esc(a.what)}</p><p><b>Stack with cards:</b> ${esc(a.stack)}</p><p><b>How:</b> ${esc(a.how)}</p>${a.verify?`<p class="vf">Verify: ${esc(a.verify)}</p>`:''}<div class="sub">Sources: ${(a.src||[]).map((u,k)=>`<a href="${esc(u)}" target="_blank" rel="noopener">${k+1}</a>`).join(' · ')}</div></div>`;
+  const bestFor=c=>{ if(!held().length) return ''; const r=recommend(S,{amount:100,cat:c,channel:CAT[c].ch,pay:'wallet',fcy:c==='fcy',merchant:'',date:today()}); const b=r.list[0]; return b&&b.miles>0?`<span class="pill">Card now: ${esc(short(b.card.name))} ${(b.miles/100).toFixed(1)} mpd</span>`:''; };
+  return backBar('Save more')+`<div class="card"><div class="sub">Free apps that stack on top of your card miles. Open the app first, then pay with the card shown. Checked ${CONTENT_CHECKED}; promos change often.</div>
+   <div class="chips scroll">${cats.map(c=>`<button class="chip ${cur===c?'on':''}" onclick="saveCat=${cur===c?'null':`'${c}'`};render()">${catIcon(c)} ${esc(CAT[c].short)}</button>`).join('')}</div></div>
+   ${(cur?[cur]:cats).map(c=>{ const x=C.byCat[c]; return `<div class="card"><div class="h3">${catIcon(c)} ${esc(catName(c))}</div><div>${esc(x.tip)}</div>
+     <div style="margin-top:6px">${(x.apps||[]).map((id,k)=>{const a=C.apps.find(a=>a.id===id); return a?`<span class="pill">${k+1}. ${a.icon||''} ${esc(a.name)}</span>`:'';}).join('')}${bestFor(c)}</div>
+     ${cur?(x.apps||[]).map(id=>C.apps.find(a=>a.id===id)).filter(Boolean).map(appCard).join(''):''}</div>`; }).join('')}
+   ${cur?'':`<div class="card"><div class="h3">All apps</div>${C.apps.map(appCard).join('')}</div>`}
+   <details class="card"><summary>Edit this content (JSON)</summary><div class="sub">Change tips/apps when promos change. Saved on this phone; "Reset" goes back to the built-in version.</div>
+    <textarea id="cjson" rows="12">${esc(JSON.stringify({apps:C.apps,byCat:C.byCat,tips:C.tips},null,1))}</textarea>
+    <div class="btnrow"><button onclick="saveContent()">Save content</button><button onclick="S.content={};save();render();toast('Content reset')">Reset</button></div></details>`; }
+function saveContent(){ try{ const o=JSON.parse($('#cjson').value); S.content={...S.content,...o}; save(); toast('Content saved'); render(); }catch(e){ alert('Invalid JSON: '+e.message); } }
+
+function viewGuide(){ return backBar('How to use')+`
+ <div class="card"><div class="h3">1. Install on your iPhone</div><ol class="steps"><li>Open the app link in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (square with arrow).</li><li>Choose <b>Add to Home Screen</b> → Add.</li><li>Open it from the home-screen icon. Works offline; data stays on this phone.</li></ol></div>
+ <div class="card"><div class="h3">2. First setup (2 minutes)</div><ol class="steps"><li>Tick the cards you hold.</li><li>Enter statement dates for Citi Rewards and UOB Visa Signature (their caps reset per statement).</li><li>Set budgets for categories you want to watch.</li></ol><button class="link" onclick="obStep=0;S.settings.onboarded=false;render()">Run setup now →</button></div>
+ <div class="card"><div class="h3">3. Add an expense in 10 seconds</div><ol class="steps"><li>Tap <b>➕ Add</b> (or a Quick add merchant).</li><li>Type the amount.</li><li>Tap a category (the app remembers your last one and guesses from the merchant).</li><li>Check In-store / Online and how you pay.</li><li>Tap the green-backed <b>Save</b> bar - it shows the best card and miles.</li></ol></div>
+ <div class="card"><div class="h3">4. Read the recommendation</div><ol class="steps"><li>🏆 line = the card to use and the miles you'll get.</li><li>Grey cards show why they lose: <i>Cap reached</i>, <i>Min spend not met</i>, <i>Not eligible</i>.</li><li>✂️ Split appears when a purchase straddles a cap.</li><li>Tap another card to log what you actually used.</li></ol></div>
+ <div class="card"><div class="h3">5. Home, Spend, Miles</div><ol class="steps"><li><b>Home</b>: month total, miles, cap nudges ("S$320 left at 4 mpd") and top ways to optimise.</li><li><b>Spend</b>: categories vs last month and 3-month average, top merchants, budgets, all transactions.</li><li><b>Miles</b>: cap bars, minimum-spend progress and best card per category.</li></ol></div>
+ <div class="card"><div class="h3">6. Save more with apps</div><div class="sub">More → Save more: per category, which free app to open first (Kris+, HeyMax, ShopBack, GrabCoins, CardUp…) and which card to pay with. After you save an expense you'll see a one-line tip.</div></div>
+ <div class="card"><div class="h3">7. Back up</div><div class="sub">More → Backup & settings → <b>Export JSON</b> once a month (save it to Files/iCloud). Import restores everything. Deleting Safari website data deletes the app data.</div></div>`; }
+
+/* ---------- Data & settings ---------- */
+function setTheme(t){ S.settings.theme=t; save(); applyTheme(); render(); }
 /* repeat-monthly templates live in S.recurring; each auto-added entry is a normal, editable transaction */
 function syncRecurring(t,on){
   let r=t.recurId&&S.recurring.find(x=>x.id===t.recurId);
@@ -587,11 +985,11 @@ function syncRecurring(t,on){
   } else if(r){ r.active=false; }
 }
 function stopRecurring(id){ const r=S.recurring.find(x=>x.id===id); if(r){ r.active=false; save(); render(); toast('Stopped repeating'); } }
-function editTx(id){ const t=S.txs.find(t=>t.id===id); if(!t) return; editingId=id; const rr=t.recurId&&S.recurring.find(x=>x.id===t.recurId); draft={src:t.src||'card',repeat:!!(rr&&rr.active),amount:t.amount,cat:t.cat,channel:t.channel||'online',pay:t.pay||(t.wallet===false?'tap':'wallet'),inApp:!!t.inApp,fcy:!!t.fcy,sea:!!t.sea,merchant:t.merchant||'',date:t.date}; pickedCard=t.card; setView('add'); }
-function cancelEdit(){ editingId=null; draft=freshDraft(); pickedCard=null; render(); }
-function delTx(id){ const t=S.txs.find(x=>x.id===id); if(!t||!confirm('Delete this transaction?')) return; S.txs=S.txs.filter(x=>x.id!==id);
-  const r=t.recurId&&S.recurring.find(x=>x.id===t.recurId); if(r&&r.active&&confirm('Also stop repeating it every month? (Cancel = keep repeating)')) r.active=false;
-  save(); render(); toast('Deleted'); }
+function editTx(id){ const t=S.txs.find(t=>t.id===id); if(!t) return; editingId=id; const rr=t.recurId&&S.recurring.find(x=>x.id===t.recurId); draft={src:t.src||'card',repeat:!!(rr&&rr.active),amount:t.amount,cat:t.cat,channel:t.channel||'online',pay:t.pay||(t.wallet===false?'tap':'wallet'),inApp:!!t.inApp,fcy:!!t.fcy,sea:!!t.sea,merchant:t.merchant||'',date:t.date,catTouched:true}; pickedCard=t.card; pickedManual=true; lastHint=null; setView('add'); }
+function cancelEdit(){ editingId=null; draft=freshDraft(); pickedCard=null; pickedManual=false; setView('spend'); }
+function delTx(id){ const k=S.txs.findIndex(x=>x.id===id); if(k<0) return; const t=S.txs[k]; S.txs.splice(k,1);
+  const r=t.recurId&&S.recurring.find(x=>x.id===t.recurId); if(r&&r.active&&confirm('This entry repeats monthly. Stop repeating it too? (Cancel = keep repeating)')) r.active=false;
+  save(); render(); toast('Deleted','Undo',()=>{ S.txs.splice(Math.min(k,S.txs.length),0,t); save(); render(); toast('Restored'); }); }
 
 /* ---------- Month ---------- */
 function shiftMonth(k){ let [y,m]=viewMonth.split('-').map(Number); m+=k; if(m<1){m=12;y--;} if(m>12){m=1;y++;} viewMonth=y+'-'+pad(m); render(); }
@@ -622,7 +1020,7 @@ function viewMonthHtml(){
     <div><small>Miles earned</small><b>${n0(miles)}</b></div>
     <div><small>Card spend</small><b>${money(spend)}</b></div>
     <div><small>Effective mpd</small><b>${spend?(miles/spend).toFixed(2):'–'}</b></div>
-    <div><small>Miles missed vs best</small><b class="${missed?'red':''}">${n0(missed)}</b></div>
+    <div><small>Miles missed vs best</small><b class="${missed?'amber':''}">${n0(missed)}</b>${missed?'<button class="link" style="padding:0;min-height:0;font-size:13px" onclick="setView(\'spend\')">Which purchases?</button>':''}</div>
   </div>
   <div class="card"><div class="h3">Bonus caps <small>(as at ${esc(ref)})</small></div>
   ${pools.length?pools.map(p=>{ const pct=Math.min(1,p.pct); const cls=p.pct>=1?'red':p.pct>=0.75?'amber':'green';
@@ -636,19 +1034,7 @@ function viewMonthHtml(){
   </div>
   ${Object.keys(byCard).length?`<div class="card"><div class="h3">By card</div>${Object.entries(byCard).sort((a,b)=>b[1].m-a[1].m).map(([id,v])=>`<div class="kv"><span>${esc(short((cardById(id)||{name:id}).name))}</span><span>${money(v.s)} · <b>${n0(v.m)} mi</b></span></div>`).join('')}
    <div class="h3" style="margin-top:10px">By category</div>${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div class="kv"><span>${CAT[c]?CAT[c].icon+' '+esc(CAT[c].name):esc(c)}</span><span>${money(v)}</span></div>`).join('')}</div>`:''}
-  <div class="card"><div class="h3">Transactions (${txs.length})</div>
-  ${txs.length?txs.map(t=>{const r=L.res[t.id]||{}; const c=cardById(t.card); const opt=cardById(r.optimal);
-    if(!isCardTx(t)){ const sv=SRC[t.src]||{icon:'?',name:t.src}; return `<div class="tx"><div class="grow"><div><b>${esc(t.merchant||(CAT[t.cat]||{name:t.cat}).name)}</b> <small>${esc(t.date.slice(8))} ${MONTHS[+t.date.slice(5,7)-1]}</small>${t.recurId?' <small title="repeats monthly">🔁</small>':''}</div>
-      <div class="sub">${(CAT[t.cat]||{icon:''}).icon} ${esc((CAT[t.cat]||{name:t.cat}).name)} · ${sv.icon} ${esc(sv.name)} · no miles</div></div>
-      <div class="miles">${money(t.amount)}<br><small>0 mi</small></div>
-      <div class="acts"><button onclick="editTx('${t.id}')" aria-label="edit">✏️</button><button onclick="delTx('${t.id}')" aria-label="delete">🗑️</button></div></div>`; }
-    return `<div class="tx"><div class="grow"><div><b>${esc(t.merchant||CAT[t.cat].name)}</b> <small>${esc(t.date.slice(8))} ${MONTHS[+t.date.slice(5,7)-1]}</small>${t.recurId?' <small title="repeats monthly">🔁</small>':''}</div>
-      <div class="sub">${CAT[t.cat].icon} ${esc(CAT[t.cat].name)} · ${t.channel==='online'?'online'+(t.inApp?' (in-app wallet)':''):'in-store ('+({wallet:'phone tap',tap:'card tap',chip:'chip'}[t.pay||(t.wallet===false?'tap':'wallet')])+')'}${t.fcy?' · FCY'+(t.sea?' (SEA)':''):''} · ${esc(c?short(c.name):'?')}</div>
-      ${r.pendingMin?`<div class="warn">Bonus pending min spend</div>`:''}
-      ${r.missed>0&&opt?`<div class="warn">Best was ${esc(short(opt.name))}: +${n0(r.missed)} mi</div>`:''}</div>
-      <div class="miles">${money(t.amount)}<br><b>${n0(r.miles||0)}</b><small> mi</small></div>
-      <div class="acts"><button onclick="editTx('${t.id}')" aria-label="edit">✏️</button><button onclick="delTx('${t.id}')" aria-label="delete">🗑️</button></div></div>`;}).join(''):'<div class="sub">No transactions this month.</div>'}
-  </div>`;
+  <div class="sub" style="text-align:center;margin-bottom:10px">Transactions are listed in <button class="link" onclick="setView('spend')">Spend</button>.</div>`;
 }
 
 /* ---------- Best card cheat sheet ---------- */
@@ -664,11 +1050,11 @@ function viewBest(){
 
 /* ---------- Cards ---------- */
 function viewCards(){
-  return `<div class="card"><div class="h3">Your cards</div><div class="sub">Tick the cards you hold. Tap a card to see/edit its rules. Data checked ${CHECKED} (MileLion, bank pages, Mainly Miles, SuiteSmile, YouTrip, Truffle). Items marked <span class="vf">verify</span> could not be confirmed.</div></div>
+  return backBar('Cards')+`<div class="card"><div class="h3">Your cards</div><div class="sub">Tick the cards you hold. Tap a card to see/edit its rules. Data checked ${CHECKED} (MileLion, bank pages, Mainly Miles, SuiteSmile, YouTrip, Truffle). Items marked <span class="vf">verify</span> could not be confirmed.</div></div>
   ${S.cards.map(c=>`<div class="card ccard">
     <div class="row"><label class="tog grow" style="margin:0"><input type="checkbox" ${c.held?'checked':''} onchange="toggleHeld('${c.id}',this.checked)"> <b>${esc(c.name)}</b></label>
     <button class="link" onclick="openCard=openCard==='${c.id}'?null:'${c.id}';render()">${openCard===c.id?'Close':'Details'}</button></div>
-    <div class="sub">${c.rules.length?c.rules.map(r=>`${r.mpd} mpd ${esc(r.label)}`).join(' · '):'General spend card'} · base ${c.baseLocal} local / ${c.baseFcy} FCY${Object.values(c.pools).length?' · caps '+Object.values(c.pools).map(p=>money(p.cap).replace('.00','')).join(' + ')+' per '+(c.cycle==='statement'?'statement':'calendar')+' month':''}${c.min?' · min S$'+c.min:''}${(c.info.verify||[]).length?' · <span class="vf">verify</span>':''}</div>
+    <div class="sub">${c.rules.length?c.rules.map(r=>`${r.mpd} mpd ${esc(r.label)}`).join(' · '):'General spend card'} · base ${c.baseLocal} local / ${c.baseFcy} FCY${Object.values(c.pools).length?' · caps '+Object.values(c.pools).map(p=>money(p.cap).replace('.00','')).join(' + ')+' per '+(c.cycle==='statement'?'statement':'calendar')+' month':''}${c.min?' · min S$'+c.min:''}${(c.info.verify||[]).length?' · <span class="vf">verify</span>':''}${c.held&&c.cycle==='statement'&&!c.stmtSet&&c.id!=='amaze_citi'?'<div class="warn">📅 Statement date not set - open Details</div>':''}</div>
     ${openCard===c.id?cardEditor(c):''}</div>`).join('')}
   <div class="btnrow"><button onclick="resetCards()">Reset all card data to researched defaults</button></div>`;
 }
@@ -680,7 +1066,8 @@ function cardEditor(c){
     <label>Base mpd (FCY)<input type="number" step="0.01" value="${c.baseFcy}" onchange="setCardF('${c.id}','baseFcy',+this.value)"></label>
     <label>Earning block S$<input type="number" step="1" min="1" value="${c.block}" onchange="setCardF('${c.id}','block',+this.value||1)"></label>
     <label>Cap cycle<select onchange="setCardF('${c.id}','cycle',this.value)"><option value="calendar" ${c.cycle==='calendar'?'selected':''}>Calendar month</option><option value="statement" ${c.cycle==='statement'?'selected':''}>Statement month</option></select></label>
-    ${c.cycle==='statement'?`<label>Statement cycle starts on day<input type="number" min="1" max="28" value="${c.stmtDay}" onchange="setCardF('${c.id}','stmtDay',+this.value||1)"></label>`:''}
+    ${c.cycle==='statement'?`<label>Statement cycle starts on day<input type="number" min="1" max="28" value="${c.stmtDay}" onchange="setStmt('${c.id}',this.value);render()"></label>`:''}
+    <label>Annual fee month<select onchange="setCardF('${c.id}','feeMonth',+this.value||undefined)"><option value="">Not set</option>${MONTHS.map((m,k)=>`<option value="${k+1}" ${+c.feeMonth===k+1?'selected':''}>${m}</option>`).join('')}</select></label>
     ${c.min!==undefined?`<label>Min spend S$/month<input type="number" value="${c.min}" onchange="setCardF('${c.id}','min',+this.value)"></label>`:''}
    </div>
    ${(c.min||Object.values(c.pools).some(p=>p.min))?`<label class="tog"><input type="checkbox" ${c.assumeMin!==false?'checked':''} onchange="setCardF('${c.id}','assumeMin',this.checked)"> In recommendations, assume I'll meet the min spend</label>`:''}
@@ -700,7 +1087,7 @@ function cardEditor(c){
    <button class="link" onclick="resetCard('${c.id}')">Reset this card to default</button>
   </div>`;
 }
-function toggleHeld(id,v){cardById(id).held=v; save(); pickedCard=null; render();}
+function toggleHeld(id,v){cardById(id).held=v; save(); pickedCard=null; pickedManual=false; render();}
 function setCardF(id,k,v){cardById(id)[k]=v; save(); render();}
 function setOpt(id,k,v){const c=cardById(id); c.options=c.options||{}; c.options[k]=v; save(); render();}
 function setLady(id,k,v){const c=cardById(id); const a=c.options.ladyCats.slice(); a[k]=v; if(a[0]===a[1]) return toast('Pick two different categories'); c.options.ladyCats=a; save(); render();}
@@ -715,13 +1102,15 @@ function resetCards(){ if(!confirm('Reset ALL card data (keeps your ticks and tr
 
 /* ---------- Data ---------- */
 function viewData(){
-  return `<div class="card"><div class="h3">Backup</div>
+  return backBar('Backup & settings')+`<div class="card"><div class="h3">Appearance</div><div class="seg">${[['auto','Auto'],['light','☀️ Light'],['dark','🌙 Dark']].map(([v,l])=>`<button class="${(S.settings.theme||'auto')===v?'on':''}" onclick="setTheme('${v}')">${l}</button>`).join('')}</div>
+   <label class="tog"><input type="checkbox" ${S.settings.saveHints!==false?'checked':''} onchange="S.settings.saveHints=this.checked;save()"> Show a "Save more" app tip after adding an expense</label></div>
+  <div class="card"><div class="h3">Backup</div>
    <div class="btnrow"><button class="primary" onclick="exportJson()">⬇️ Export JSON</button><button onclick="$('#imp').click()">⬆️ Import JSON</button></div>
    <input id="imp" type="file" accept="application/json,.json" style="display:none" onchange="importFile(this.files[0])">
    <div class="sub">Data lives only in this browser (localStorage). Export regularly, especially before clearing browser data or switching phones.</div></div>
   <div class="card"><div class="h3">Demo</div>
    <div class="btnrow"><button onclick="loadDemo()">Load demo data</button><button onclick="clearDemo()">Remove demo transactions</button><button class="danger" onclick="clearAll()">Delete ALL transactions</button></div>
-   <div class="sub">Demo adds 12 transactions (incl. rent by bank transfer, PayNow, cash) (merchant marked "[DEMO]"). "Remove demo transactions" deletes only those.</div></div>
+   <div class="sub">Demo adds about 3 months of sample transactions (incl. rent by bank transfer, PayNow, cash; merchants marked "[DEMO]"), and ticks your cards / sample budgets if none are set. "Remove demo transactions" deletes only those.</div></div>
   <div class="card"><div class="h3">Settings</div>
    <label class="tog"><input type="checkbox" ${S.settings.kf!==false?'checked':''} onchange="setKf(this.checked)"> Count miles as <b>KrisFlyer</b> miles (HSBC converts 25,000 pts → 10,000 KF, so 4 mpd → 3.33 KF mpd; other cards convert 1:1)</label></div>
   <div class="card"><div class="h3">Expenses settings</div>
@@ -738,37 +1127,17 @@ function viewData(){
    <li>UOB Visa Signature needs S$1,000 per statement month in each bucket (FCY / local contactless). Logged spend only earns the bonus once the total reaches it ("pending"). Recommendations don't assume it unless you tick that option.</li>
    <li>Category ≠ MCC. Banks pay bonuses by merchant category code, and the app maps categories to typical MCCs. Bills/insurance earn no bonus (UOB/HSBC earn 0 on them).</li>
    <li>Bank transfer / PayNow / Cash entries earn 0 miles and are ignored for caps, minimum spend, recommendations, effective mpd and miles missed. They only count in Expenses.</li>
-   <li>Not modelled: welcome offers, Kris+/HeyMax stacking, UOB Lady's Savings boost, Citi PayAll, FCY fees (≈3.25%) and Amaze's 1% SGD fee (warning only).</li></ul></div>`;
+   <li>Not modelled in miles totals: welcome offers, Kris+/HeyMax/ShopBack extras (see Save more), UOB Lady's Savings boost, Citi PayAll, FCY fees (≈3.25%) and Amaze's 1% SGD fee (warning only).</li></ul></div>`;
 }
 function exportJson(){ const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='miles-tracker-backup-'+today()+'.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Exported'); }
 function importFile(f){ if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o.cards||!o.txs) throw new Error('Not a tracker backup'); if(!confirm(`Import ${o.txs.length} transactions and ${o.cards.length} cards? This replaces current data.`)) return; S=migrateState(o); setKfMode(S.settings.kf!==false); const n=applyRecurring(S,today()); save(); toast('Imported'+(n?` (+${n} recurring)`:'')); render(); }catch(e){ alert('Import failed: '+e.message); } }; rd.readAsText(f); }
-function loadDemo(){
-  const t=today(); const ym=t.slice(0,8); const d=n=>ym+pad(Math.min(n,+t.slice(8)||1));
-  const demo=[
-   {date:d(1),merchant:'[DEMO] Shopee',cat:'shopping',channel:'online',amount:85.40,card:'citi_rewards'},
-   {date:d(2),merchant:'[DEMO] Din Tai Fung',cat:'dining',channel:'instore',pay:'wallet',amount:126.00,card:'uob_lady_sol'},
-   {date:d(2),merchant:'[DEMO] Grab ride',cat:'transport',channel:'online',amount:23.80,card:'citi_rewards'},
-   {date:d(3),merchant:'[DEMO] FairPrice',cat:'groceries',channel:'instore',pay:'wallet',amount:142.35,card:'uob_ppv'},
-   {date:d(4),merchant:'[DEMO] Scoot flight',cat:'travel',channel:'online',amount:420.00,card:'dbs_wwmc'},
-   {date:d(5),merchant:'[DEMO] SP Group bill',cat:'bills',channel:'online',amount:98.20,card:'citi_prestige'},
-   {date:d(6),merchant:'[DEMO] Golden Village',cat:'entertainment',channel:'instore',pay:'wallet',amount:39.00,card:'uob_lady_sol'},
-   {date:d(1),merchant:'[DEMO] Rent',cat:'rent',src:'bank',amount:3000,card:null},
-   {date:d(3),merchant:'[DEMO] Mum',cat:'family',src:'paynow',amount:500,card:null},
-   {date:d(4),merchant:'[DEMO] Hawker',cat:'dining',src:'cash',amount:18.50,card:null},
-   {date:d(5),merchant:'[DEMO] Endowus',cat:'savings',src:'bank',amount:1000,card:null},
-   {date:d(7),merchant:'[DEMO] Uniqlo Tokyo',cat:'fcy',channel:'instore',pay:'tap',fcy:true,amount:210.00,card:'uob_prvi'}];
-  demo.forEach((x,i)=>S.txs.push({fcy:false,src:'card',...x,id:'demo'+i+Date.now().toString(36),ts:Date.now()+i,demo:true}));
-  save(); toast('Demo data loaded'); viewMonth=t.slice(0,7); setView('month');
-}
 function clearDemo(){ S.txs=S.txs.filter(t=>!t.demo); save(); toast('Demo removed'); render(); }
 function clearAll(){ if(!confirm('Delete ALL transactions? Export a backup first if unsure.')) return; S.txs=[]; save(); render(); }
-
-document.addEventListener('DOMContentLoaded',()=>{ view=held().length?'add':'cards'; const nAdded=applyRecurring(S,today()); save(); if(nAdded) setTimeout(()=>toast(`🔁 Added ${nAdded} repeating entr${nAdded>1?'ies':'y'} for this month`),300); document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===view)); render(); });
 
 /* ---------- Expenses (all payment sources) ---------- */
 function srcName(k){ if(k.startsWith('card:')){ const c=cardById(k.slice(5)); return '💳 '+(c?short(c.name):'Card'); } const x=SRC[k]; return x?x.icon+' '+x.name:k; }
 function barCls(p){ return p>1?'red':p>=0.75?'amber':'green'; }
-function viewExpenses(){
+function viewExpenses(ins){
   const [y,m]=viewMonth.split('-').map(Number); const E=expenseSummary(S,viewMonth);
   const diffPct=E.prevTotal?(E.total-E.prevTotal)/E.prevTotal:null;
   const arrow=(d)=>Math.abs(d)<0.005?'<span class="sub">= last month</span>':d>0?`<span class="up">▲ ${money(d)}</span>`:`<span class="down">▼ ${money(-d)}</span>`;
@@ -786,21 +1155,74 @@ function viewExpenses(){
     <div><small>Entries</small><b>${E.count}</b></div>
     <div><small>Excluded transfers</small><b>${money(E.excluded)}</b></div>
   </div>
+  ${ins||''}
   <div class="card"><div class="h3">By category <small>(vs last month)</small></div>
    ${rows.length?rows.map(r=>{const c=CAT[r.cat]||{icon:'•',name:r.cat}; return `<div class="erow"><div class="ehead"><span>${c.icon} ${esc(c.name)}</span><span><b>${money(r.amount)}</b> <small>${(r.pct*100).toFixed(0)}%</small></span></div>
      <div class="bar thin"><i class="blue" style="width:${(r.amount/maxCat*100).toFixed(1)}%"></i></div><div class="sub right">${arrow(r.diff)}</div></div>`;}).join(''):'<div class="sub">No expenses this month.</div>'}
-   ${E.excluded?`<div class="sub">Not counted: ${Object.entries(E.excludedByCat).map(([c,v])=>`${(CAT[c]||{icon:''}).icon} ${esc((CAT[c]||{name:c}).name)} ${money(v)}`).join(', ')} (Data → Expenses settings)</div>`:''}
+   ${E.excluded?`<div class="sub">Not counted: ${Object.entries(E.excludedByCat).map(([c,v])=>`${(CAT[c]||{icon:''}).icon} ${esc((CAT[c]||{name:c}).name)} ${money(v)}`).join(', ')} (More → Backup & settings)</div>`:''}
   </div>
   <div class="card"><div class="h3">By payment source</div>
    ${srcs.length?srcs.map(([k,v])=>`<div class="erow"><div class="ehead"><span>${esc(srcName(k))}</span><span><b>${money(v)}</b> <small>${E.total?(v/E.total*100).toFixed(0):0}%</small></span></div><div class="bar thin"><i class="${k.startsWith('card:')?'blue':'grey'}" style="width:${(v/maxSrc*100).toFixed(1)}%"></i></div></div>`).join(''):'<div class="sub">–</div>'}
   </div>
   <div class="card"><div class="h3">Budgets</div>
    ${budgeted.length?budgeted.map(r=>{const c=CAT[r.cat]||{icon:'',name:r.cat}; const p=r.budgetPct; return `<div class="cap"><div class="caphead"><span>${c.icon} ${esc(c.name)}</span><span>${money(r.amount).replace('.00','')} / ${money(r.budget).replace('.00','')}</span></div>
-     <div class="bar"><i class="${barCls(p)}" style="width:${Math.min(100,p*100).toFixed(1)}%"></i></div><div class="sub ${r.remaining<0?'red':''}">${r.remaining>=0?money(r.remaining)+' left':money(-r.remaining)+' over budget'}</div></div>`;}).join(''):'<div class="sub">No budgets set.</div>'}
-   <details><summary>Set monthly budgets</summary>${CATS.filter(c=>!ex.includes(c.id)&&c.id!=='fcy'&&c.id!=='contactless').map(c=>`<label class="kv"><span>${c.icon} ${esc(c.name)}</span><input class="bud" type="number" inputmode="decimal" min="0" step="10" placeholder="–" value="${S.settings.budgets[c.id]||''}" onchange="setBudget('${c.id}',this.value)"></label>`).join('')}<div class="sub">Same budget every month. Leave blank for none.</div></details>
+     <div class="bar"><i class="${barCls(p)}" style="width:${Math.min(100,p*100).toFixed(1)}%"></i></div><div class="sub ${r.remaining<0?'red':''}">${r.remaining>=0?money(r.remaining)+' left':money(-r.remaining)+' over budget'}</div></div>`;}).join(''):'<div class="sub">No budgets yet - set one below to get over-budget alerts.</div>'}
+   <details ${editBudgets?'open':''} ontoggle="editBudgets=this.open"><summary>${budgeted.length?'Edit':'Set'} monthly budgets</summary>${CATS.filter(c=>!ex.includes(c.id)&&c.id!=='fcy'&&c.id!=='contactless').map(c=>`<label class="kv"><span>${c.icon} ${esc(c.name)}</span><input class="bud" type="number" inputmode="decimal" min="0" step="10" placeholder="–" value="${S.settings.budgets[c.id]||''}" onchange="setBudget('${c.id}',this.value)"></label>`).join('')}<div class="sub">Same budget every month. Leave blank for none.</div></details>
   </div>
   <div class="card"><div class="h3">6-month trend</div>
    <div class="trend">${E.trend.map(t=>`<div class="tcol ${t.ym===viewMonth?'on':''}"><small>${t.total?(t.total>=1000?(t.total/1000).toFixed(1)+'k':Math.round(t.total)):''}</small><i style="height:${(t.total/maxT*85).toFixed(1)}%"></i><span>${MONTHS[+t.ym.slice(5)-1]}</span></div>`).join('')}</div>
   </div>`;
 }
+function txRow(t,L){ const r=L.res[t.id]||{}; const c=cardById(t.card); const opt=cardById(r.optimal); const dt=`${esc(t.date.slice(8))} ${MONTHS[+t.date.slice(5,7)-1]}`;
+  const acts=`<div class="acts"><button onclick="editTx('${t.id}')" aria-label="Edit">✏️</button><button onclick="delTx('${t.id}')" aria-label="Delete">🗑️</button></div>`;
+  if(!isCardTx(t)){ const sv=SRC[t.src]||{icon:'?',name:t.src}; return `<div class="tx"><div class="grow"><div><b>${esc(merchantKey(t)||catName(t.cat))}</b> <small class="sub">${dt}</small>${t.recurId?' <small title="repeats monthly">🔁</small>':''}</div>
+      <div class="sub">${catIcon(t.cat)} ${esc(catName(t.cat))} · ${sv.icon} ${esc(sv.name)}</div></div><div class="miles">${money(t.amount)}<br><small>no miles</small></div>${acts}</div>`; }
+  return `<div class="tx"><div class="grow"><div><b>${esc(merchantKey(t)||catName(t.cat))}</b> <small class="sub">${dt}</small>${t.recurId?' <small title="repeats monthly">🔁</small>':''}</div>
+      <div class="sub">${catIcon(t.cat)} ${esc(c?short(c.name):'?')} · ${t.channel==='online'?'online'+(t.inApp?' (in-app wallet)':''):({wallet:'phone tap',tap:'card tap',chip:'chip'}[t.pay||(t.wallet===false?'tap':'wallet')])}${t.fcy?' · FCY'+(t.sea?' (SEA)':''):''}</div>
+      ${r.pendingMin?`<div class="warn">Bonus pending min spend</div>`:''}${r.missed>0&&opt?`<div class="warn">Better: ${esc(short(opt.name))} +${n0(r.missed)} mi</div>`:''}</div>
+      <div class="miles">${money(t.amount)}<br><b>${n0(r.miles||0)}</b><small> mi</small></div>${acts}</div>`; }
+
+function loadDemo(){
+  const t=today(); const cur=t.slice(0,7); const dmax=+t.slice(8)||1;
+  const mk=(ym,n)=>ym+'-'+pad(Math.min(n,ym===cur?dmax:28));
+  const base=[ // [day, merchant, cat, channel, pay, amount, card, src]
+   [1,'Rent','rent',null,null,3000,null,'bank'],[3,'Mum','family',null,null,500,null,'paynow'],[5,'Endowus','savings',null,null,1000,null,'bank'],
+   [2,'Netflix','entertainment','online',null,22.98,'citi_rewards'],[2,'Spotify','entertainment','online',null,11.98,'citi_rewards'],[5,'SP Group bill','bills','online',null,98.20,'uob_prvi'],
+   [2,'Din Tai Fung','dining','instore','wallet',126,'uob_lady_sol'],[3,'FairPrice','groceries','instore','wallet',142.35,'uob_ppv'],[4,'Grab ride','transport','online',null,23.80,'citi_rewards'],
+   [4,'Hawker','dining',null,null,18.50,null,'cash'],[6,'GrabFood','dining','online',null,38.60,'dbs_wwmc'],[7,'Shopee','shopping','online',null,85.40,'citi_rewards'],
+   [8,'Golden Village','entertainment','instore','wallet',39,'uob_lady_sol'],[9,'foodpanda','dining','online',null,32.10,'uob_prvi'],[10,'Grab ride','transport','online',null,18.20,'citi_rewards'],[11,'FairPrice','groceries','instore','wallet',96.80,'uob_ppv']];
+  const extra={0:[[4,'Scoot flight','travel','online',null,420,'dbs_wwmc'],[7,'Uniqlo Tokyo','fcy','instore','tap',210,'uob_prvi'],[9,'GrabFood','dining','online',null,41.30,'dbs_wwmc']],
+    1:[[12,'Lazada','shopping','online',null,160,'dbs_wwmc'],[15,'Haidilao','dining','instore','wallet',188,'uob_lady_sol'],[20,'GrabFood','dining','online',null,35,'dbs_wwmc']],
+    2:[[14,'Courts','others','instore','wallet',350,'uob_ppv'],[22,'Sheng Siong','groceries','instore','wallet',88,'uob_ppv']]};
+  let i=0; for(const k of [2,1,0]){ const ym=ymAdd(cur,-k);
+    for(const x of [...base,...extra[k]]){ const [day,mer,cat,ch,pay,amt,card,src]=x; if(k===0&&day>dmax) continue;
+      const amount=k===0?amt:Math.round(amt*(0.85+((i*37)%30)/100)*100)/100;
+      S.txs.push({src:src||'card',fcy:cat==='fcy',date:mk(ym,day),merchant:'[DEMO] '+mer,cat,channel:ch||'online',...(ch==='instore'?{pay}:{}),amount:/Netflix|Spotify|Rent|Endowus|Mum/.test(mer)?amt:amount,card:card||null,id:'demo'+(i++)+Date.now().toString(36),ts:Date.now()+i,demo:true}); } }
+  if(!held().length) ['citi_rewards','dbs_wwmc','hsbc_revo','uob_ppv','uob_vs','uob_lady_sol','uob_prvi','citi_prestige'].forEach(id=>{const c=cardById(id); if(c) c.held=true;});
+  if(!Object.keys(S.settings.budgets).length) S.settings.budgets={dining:300,groceries:250,entertainment:80,shopping:200,transport:120};
+  S.settings.onboarded=true; save(); toast('Demo data loaded - remove it in More → Backup & settings'); viewMonth=cur; setView('home');
+}
+
+/* ---------- First-run onboarding ---------- */
+function renderOb(){ let o=$('#ob'); if(S.settings.onboarded){ if(o) o.remove(); return; }
+  if(!o){ o=document.createElement('div'); o.id='ob'; o.className='ob'; document.body.appendChild(o); }
+  const N=4; const dots=`<div class="dots">${[0,1,2,3].map(k=>`<i class="${k===obStep?'on':''}"></i>`).join('')}</div>`;
+  const nav=(back,next,label)=>`<div class="btnrow">${back?`<button onclick="obStep--;renderOb()">Back</button>`:''}<button class="primary" onclick="${next}">${label||'Next'}</button></div>`;
+  let h='';
+  if(obStep===0) h=`<div class="empty"><div class="e">✈️</div><h2>SG Miles Tracker</h2><p>Know which card to use for every purchase, stay inside your 4 mpd caps, and see where your money goes. Everything stays on this phone.</p></div>${nav(false,'obStep=1;renderOb()','Get started')}<button class="link" style="width:100%" onclick="finishOb(true)">Skip and look at demo data</button>`;
+  if(obStep===1) h=`<h2>Which cards do you hold?</h2><div class="sub">Untick any you don't carry. You can change this later in More → Cards.</div><div class="card">${S.cards.map(c=>`<label class="tog"><input type="checkbox" ${c.held?'checked':''} onchange="cardById('${c.id}').held=this.checked;save()"> ${esc(c.name)}</label>`).join('')}</div>${nav(true,'obStep=2;renderOb()')}`;
+  if(obStep===2){ const st=held().filter(c=>c.cycle==='statement'&&c.id!=='amaze_citi');
+    h=`<h2>Statement dates</h2><div class="sub">These cards reset their bonus caps on your statement date, not on the 1st. Check the date on your last statement (or the bank app).</div>
+    <div class="card">${st.length?st.map(c=>`<label>${esc(short(c.name))}: statement cycle starts on day<input type="number" min="1" max="28" inputmode="numeric" value="${c.stmtSet?c.stmtDay:''}" placeholder="e.g. 15" onchange="setStmt('${c.id}',this.value)"></label>`).join('<div style="height:10px"></div>'):'<div class="sub">None of your cards use statement months.</div>'}</div>
+    <div class="card"><div class="sub">Optional: annual fee months (for waiver reminders)</div>${held().filter(c=>c.id!=='amaze_citi'&&c.id!=='hsbc_revo').map(c=>`<div class="kv"><span>${esc(short(c.name))}</span><select style="width:110px" onchange="cardById('${c.id}').feeMonth=+this.value||undefined;save()"><option value="">–</option>${MONTHS.map((m,k)=>`<option value="${k+1}" ${+c.feeMonth===k+1?'selected':''}>${m}</option>`).join('')}</select></div>`).join('')}</div>${nav(true,'obStep=3;renderOb()')}`; }
+  if(obStep===3) h=`<h2>Monthly budgets</h2><div class="sub">Optional. Leave blank for none - you can set them later in Spend.</div><div class="card">${['dining','groceries','shopping','transport','entertainment','travel','others'].map(c=>`<label class="kv"><span>${catIcon(c)} ${esc(catName(c))}</span><input class="bud" type="number" inputmode="decimal" min="0" step="10" placeholder="–" value="${S.settings.budgets[c]||''}" onchange="setBudgetQuiet('${c}',this.value)"></label>`).join('')}</div>
+    <h2 style="margin-top:18px">You're set 🎉</h2><div class="btnrow"><button onclick="obStep=2;renderOb()">Back</button><button class="primary" onclick="finishOb(false)">Start tracking</button></div><button class="link" style="width:100%" onclick="finishOb(true)">Start with demo data instead</button>`;
+  o.innerHTML=`<div class="inner">${dots}${h}</div>`; }
+function setStmt(id,v){ const c=cardById(id); const n=Math.max(1,Math.min(28,+v||1)); c.stmtDay=n; c.stmtSet=!!(+v); save(); }
+function setBudgetQuiet(c,v){ v=+v; if(v>0) S.settings.budgets[c]=v; else delete S.settings.budgets[c]; save(); }
+function finishOb(demo){ S.settings.onboarded=true; save(); renderOb(); if(demo) loadDemo(); else { setView('home'); } }
+
+document.addEventListener('DOMContentLoaded',()=>{ applyTheme(); const nAdded=applyRecurring(S,today()); save();
+  if(nAdded) setTimeout(()=>toast(`🔁 Added ${nAdded} repeating entr${nAdded>1?'ies':'y'} for this month`),300);
+  view=S.txs.length||held().length?'home':'home'; setView(view); });
 </script></body></html>
