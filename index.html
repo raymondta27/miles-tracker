@@ -111,6 +111,7 @@ body.v-add #toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 .syncst{padding:10px 12px;border-radius:12px;margin:8px 0;font-weight:600}.syncst.ok{background:var(--ok-bg);color:var(--ok)}.syncst.warn{background:var(--warn-bg);color:var(--warn)}.syncst.bad{background:var(--bad-bg);color:var(--bad)}.syncst .sub{font-weight:400}
 .paywith{margin:4px 0 6px}.paywith .chip{min-height:38px;padding:7px 11px;font-size:13px}
 code{font-size:13px;background:var(--surface2);padding:1px 4px;border-radius:5px}
+.herotot{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}.exrent{text-align:right;padding-bottom:6px}.exrent small{display:block;font-size:12px;opacity:.85}.exrent b{font-size:20px}
 </style></head><body>
 <header><h1>✈️ SG Miles</h1><button class="hbtn" onclick="setView('guide')" aria-label="How to use">? Help</button></header>
 <main id="main"></main><div id="toast" role="status" aria-live="polite"></div>
@@ -1129,7 +1130,7 @@ function viewHome(){
   const bpct=s.budgetTotal?s.budgetUsed/s.budgetTotal:null;
   const recent=[...S.txs].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0)).slice(0,4); const L=evalLedger(S);
   const ops=I.opportunities.slice(0,3);
-  return `<div class="card hero"><div class="sub">${MONTHS[m-1]} ${y} · spent so far</div><div class="big">${money(s.total)}</div>
+  return `<div class="card hero"><div class="sub">${MONTHS[m-1]} ${y} · spent so far</div><div class="herotot"><div class="big">${money(s.total)}</div><div class="exrent"><small>Excl. rent</small><b>${money(exclRent(ym,s.total))}</b></div></div>
      <div class="sub">${s.prev?MONTHS[(m+10)%12]+' total '+money0(s.prev):'No data for last month'}${s.isCurrent&&s.projected>s.total+1?' · on pace for '+money0(s.projected):''}</div>
      <div class="hg"><div><small>Miles</small><b>${n0(s.miles)}</b></div><div><small>Avg mpd</small><b>${s.cardSpend?s.mpd.toFixed(2):'–'}</b></div><div><small>Missed</small><b>${n0(s.missed)}</b></div></div>
      ${bpct!==null?`<div class="sub" style="margin-top:10px">Budgets: ${money0(s.budgetUsed)} of ${money0(s.budgetTotal)} (${Math.round(bpct*100)}%)</div><div class="bar"><i style="width:${Math.min(100,bpct*100).toFixed(0)}%"></i></div>`:`<div class="sub" style="margin-top:10px"><button class="link" style="color:#fff;padding:0" onclick="editBudgets=true;goSpendMonth()">Set monthly budgets →</button></div>`}</div>
@@ -1580,6 +1581,8 @@ function spendToggle(){ return `<div class="seg ytog"><button class="${spendMode
 const kfmt=v=>v>=1000?(v/1000).toFixed(v>=10000?0:1)+'k':String(Math.round(v));
 const PALETTE=['#2e6be6','#12b76a','#f5a524','#e04f8a','#7a5af8','#98a2b3'];
 
+/* total for a month without the Rental category (if Rental is already excluded from totals, it's the same figure) */
+function exclRent(ym,total){ const t=monthTotals(S,ym); return (total!==undefined?total:t.total)-((t.byCat.rental||0)+(t.byCat.rent||0)); }
 /* ---------- 1-year overview ---------- */
 function yearData(endYm){
   const months=[]; for(let k=11;k>=0;k--) months.push(ymAdd(endYm,-k));
@@ -1602,10 +1605,10 @@ function viewYear(){
   const div=Math.max(1,Y.active); const budgets=S.settings.budgets||{};
   const spark=c=>{ const vals=Y.per.map(p=>p.byCat[c]||0), mx=Math.max(1,...vals); return `<svg class="spark" viewBox="0 0 72 18" preserveAspectRatio="none">${vals.map((v,i)=>`<rect x="${i*6}" y="${(18-v/mx*17).toFixed(1)}" width="4.5" height="${(v/mx*17).toFixed(1)}" fill="${colorOf(c)}"/>`).join('')}</svg>`; };
   const last3=c=>[1,2,3].map(k=>{const p=Y.per[11-k]; return p?p.byCat[c]||0:0;}).reduce((a,b)=>a+b,0)/3;
-  const noData=!Y.total;
+  const noData=!Y.total; const yRent=(Y.catTot.rental||0)+(Y.catTot.rent||0);
   return `<div class="stats">
-    <div><small>12-month spend</small><b>${money0(Y.total)}</b></div>
-    <div><small>Monthly average</small><b>${money0(Y.total/div)}</b><small class="sub">${Y.active} month${Y.active===1?'':'s'} with data</small></div>
+    <div><small>12-month spend</small><b>${money0(Y.total)}</b><small class="sub">Excl. rent ${money0(Y.total-yRent)}</small></div>
+    <div><small>Monthly average</small><b>${money0(Y.total/div)}</b><small class="sub">Excl. rent ${money0((Y.total-yRent)/div)} · ${Y.active} month${Y.active===1?'':'s'} with data</small></div>
     <div><small>Miles (12 months)</small><b>${n0(Y.miles)}</b></div>
     <div><small>Avg mpd on cards</small><b>${Y.cardSpend?(Y.miles/Y.cardSpend).toFixed(2):'–'}</b></div></div>
   <div class="card"><div class="h3">Monthly spend <small>${MONTHS[+Y.months[0].slice(5)-1]} ${Y.months[0].slice(0,4)} – ${MONTHS[+endYm.slice(5)-1]} ${endYm.slice(0,4)} · tap a month</small></div>
