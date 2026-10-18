@@ -130,6 +130,7 @@ const CATS = [
   {id:'insurance',short:'Insurance',name:'Insurance',icon:'☂️',ch:'online'},
   {id:'entertainment',short:'Entertainment',name:'Entertainment',icon:'🎬',ch:'online'},
   {id:'subscriptions',short:'Subscriptions',name:'Subscriptions (streaming, software, gym, phone plan)',icon:'🔁',ch:'online'},
+  {id:'personalcare',short:'Personal care',name:'Personal care (beauty, salon, spa, aesthetics)',icon:'💆',ch:'instore'},
   {id:'others',short:'Others',name:'Others',icon:'•',ch:'instore'},
   {id:'rental',short:'Rental',name:'Rental (rent / housing)',icon:'🏠',ch:'online',nc:true},
   {id:'loan',short:'Loan',name:'Loan repayment',icon:'🏦',ch:'online',nc:true},
@@ -296,7 +297,7 @@ function allPools(cards){const p={}; cards.forEach(c=>Object.entries(c.pools||{}
 function poolCycleCard(cards,poolId){const P=allPools(cards); return cards.find(c=>c.id===(P[poolId]||{}).owner);}
 
 /* ---------- rule matching ---------- */
-function ladyCats(card){ const o=card.options||{}; return o.ladyCats||[o.ladyCat||'dining']; }
+function ladyCats(card){ const o=card.options||{}; return (o.ladyCats||[o.ladyCat||'dining']).map(c=>c==='beauty'?'personalcare':c); } // UOB 'Beauty & Wellness' = personalcare
 function ruleCats(rule,card){ if(rule.cats==='all') return 'all'; return rule.cats.map(x=>x==='@ladyCat'?ladyCats(card)[0]:x==='@lady0'?ladyCats(card)[0]:x==='@lady1'?ladyCats(card)[1]:x).filter(Boolean); }
 function payOf(tx){ if(tx.channel!=='instore') return null; if(tx.pay) return tx.pay; return tx.wallet===false?'tap':'wallet'; }
 const PAYNAME={wallet:'phone/watch tap',tap:'physical card tap',chip:'chip/swipe'};
@@ -707,10 +708,12 @@ const SAVE_BY_CAT={
  rental:{apps:['cardup'],tip:'Rent by bank transfer earns nothing. CardUp RENT230 (2.3%) + UOB PRVI Visa ≈ 1.6 cents per mile - only if worth it to you.'},
  tax:{apps:['cardup'],tip:'Income tax: CardUp MLTAX26R (2.25%, recurring) + PRVI Visa ≈ 1.6 cents per mile.'},
  subscriptions:{apps:['heymax'],tip:'Pay subscriptions with the card details (not in-app Apple Pay) on Citi Rewards or DBS WWMC: 4 mpd online, within their S$1,000 caps. HSBC Revolution and UOB Preferred Visa only pay 4 mpd for software/subscription MCCs 4816/5968 - not Netflix/Spotify-type streaming (4899) or telco plans (4814). Lady\'s Entertainment excludes streaming. Review unused subscriptions in Spend → What can be optimised.'},
+ personalcare:{apps:['heymax','shopback'],tip:'Salons, spas and aesthetic clinics usually earn only a card\'s general bonus: tap Apple Pay on UOB Preferred Visa (4 mpd mobile contactless, S$600 cap) or pay online with Citi Rewards / DBS WWMC. If you pick Beauty & Wellness as a UOB Lady\'s Solitaire category it earns 4 mpd there (S$750 cap). HSBC Revolution\'s whitelist does not include beauty MCCs. Abroad, use your best FCY card (e.g. PRVI 3 mpd on VND/THB/MYR/IDR).'},
  others:{apps:['heymax','shopback'],tip:'Big-ticket buy (electronics, furniture)? Check HeyMax for Courts/Best Denki/IKEA vouchers and pay with a 4 mpd card.'}
 };
 /* merchant keywords → category (quick guesses; user can change) */
 const MERCHANT_CAT=[
+ ['\\bsalon\\b|\\bspa\\b|barber|hair ?cut|hairdress|manicure|pedicure|nail (salon|bar|studio)|facial|massage|aesthetic|botox|filler|beauty|lash|eyebrow|waxing','personalcare'],
  ['grabfood|foodpanda|deliveroo','dining'],['grab|gojek|tada|ryde|comfort|cdg|zig|simplygo|taxi','transport'],
  ['shopee|lazada|amazon|taobao|zalora|shein|uniqlo|tangs|robinsons|courts|ikea|best denki|challenger|sephora|watsons','shopping'],
  ['fairprice|ntuc|sheng siong|cold storage|giant|don don donki|redmart','groceries'],
@@ -996,7 +999,8 @@ const BENCH={
   shopping:[100,250,500,'est','Estimate (clothes, household items, gadgets)'],
   travel:[100,300,700,'est','Estimate - a sinking fund for ~1-2 trips a year'],
   insurance:[100,150,300,'est','Estimate (term/hospitalisation riders); MoneySmart groups insurance with health at S$510-810'],
-  others:[100,150,300,'est','Estimate (personal care, medical - GP visit S$20-40, gifts)']
+  personalcare:[30,80,200,'est','Estimate (haircuts, salon, spa, skincare); MoneySmart groups personal care with health & insurance at S$510-810'],
+  others:[70,100,200,'est','Estimate (medical - GP visit S$20-40, gifts, misc.)']
 };
 const HOUSING={room:{label:'Rent a room',v:[1000,1400,1600],src:'rent',note:'HDB common room median ~S$1,000; master room S$1,400-1,600 (Jun 2026)'},
   hdb:{label:'Rent a whole HDB flat',v:[2250,3200,4000],src:'ms',note:'MoneySmart: 2-room HDB ~S$2,250; 5-room S$3,200-5,150'},
@@ -1006,7 +1010,7 @@ const HOUSING={room:{label:'Rent a room',v:[1000,1400,1600],src:'rent',note:'HDB
 const LIFE=['frugal','moderate','comfortable'];
 const FIXED=['rental','bills','insurance'];
 const SCALE_HH=['dining','groceries','transport','bills'];
-const WANTS=['dining','entertainment','shopping','travel','subscriptions','others'];
+const WANTS=['dining','entertainment','shopping','travel','subscriptions','personalcare','others'];
 const MEDIAN_TAKEHOME=3950; // ≈ S$5,775 gross incl. employer CPF -> less 17% employer + 20% employee CPF (estimate)
 function med(a){ const s=[...a].sort((x,y)=>x-y), n=s.length; return n?(n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2):0; }
 const r10=x=>Math.round(x/10)*10;
@@ -1416,7 +1420,7 @@ function cardEditor(c){
     ${c.min!==undefined?`<label>Min spend S$/month<input type="number" value="${c.min}" onchange="setCardF('${c.id}','min',+this.value)"></label>`:''}
    </div>
    ${(c.min||Object.values(c.pools).some(p=>p.min))?`<label class="tog"><input type="checkbox" ${c.assumeMin!==false?'checked':''} onchange="setCardF('${c.id}','assumeMin',this.checked)"> In recommendations, assume I'll meet the min spend</label>`:''}
-   ${c.options&&c.options.ladyCats?`<div class="grid2">${[0,1].map(k=>`<label>Lady's bonus category ${k+1}<select onchange="setLady('${c.id}',${k},this.value)">${[['dining','Dining'],['entertainment','Entertainment'],['travel','Travel'],['transport','Transport'],['groceries','Family (groceries)'],['shopping','Fashion (shopping)'],['beauty','Beauty & Wellness']].filter(([v])=>CAT[v]).map(([v,l])=>`<option value="${v}" ${c.options.ladyCats[k]===v?'selected':''}>${l}</option>`).join('')}</select></label>`).join('')}</div><div class="sub">Your chosen categories (set with UOB each quarter). S$750 cap per category per calendar month.</div>`:''}
+   ${c.options&&c.options.ladyCats?`<div class="grid2">${[0,1].map(k=>`<label>Lady's bonus category ${k+1}<select onchange="setLady('${c.id}',${k},this.value)">${[['dining','Dining'],['entertainment','Entertainment'],['travel','Travel'],['transport','Transport'],['groceries','Family (groceries)'],['shopping','Fashion (shopping)'],['personalcare','Beauty & Wellness (Personal care)']].filter(([v])=>CAT[v]).map(([v,l])=>`<option value="${v}" ${c.options.ladyCats[k]===v?'selected':''}>${l}</option>`).join('')}</select></label>`).join('')}</div><div class="sub">Your chosen categories (set with UOB each quarter). S$750 cap per category per calendar month.</div>`:''}
    ${c.options&&c.options.siaSpendMet!==undefined?`<label class="tog"><input type="checkbox" ${c.options.siaSpendMet?'checked':''} onchange="setOpt('${c.id}','siaSpendMet',this.checked)"> I will spend S$1,000+ on SIA/Scoot/KrisShop this membership year (unlocks 2.4 mpd)</label>`:''}
    ${Object.entries(c.pools).map(([pid,p])=>`<div class="grid2"><label>Cap: ${esc(p.name)} (S$)<input type="number" value="${p.cap}" onchange="setPool('${c.id}','${pid}','cap',+this.value)"></label>${p.min!==undefined?`<label>Min for this cap (S$)<input type="number" value="${p.min}" onchange="setPool('${c.id}','${pid}','min',+this.value)"></label>`:''}</div>`).join('')}
    ${c.sharedNote?`<div class="sub">${esc(c.sharedNote)}</div>`:''}
@@ -1563,7 +1567,7 @@ function renderOb(){ let o=$('#ob'); if(S.settings.onboarded){ if(o) o.remove();
     h=`<h2>Statement dates</h2><div class="sub">These cards reset their bonus caps on your statement date, not on the 1st. Check the date on your last statement (or the bank app).</div>
     <div class="card">${st.length?st.map(c=>`<label>${esc(short(c.name))}: statement cycle starts on day<input type="number" min="1" max="28" inputmode="numeric" value="${c.stmtSet?c.stmtDay:''}" placeholder="e.g. 15" onchange="setStmt('${c.id}',this.value)"></label>`).join('<div style="height:10px"></div>'):'<div class="sub">None of your cards use statement months.</div>'}</div>
     <div class="card"><div class="sub">Optional: annual fee months (for waiver reminders)</div>${held().filter(c=>c.id!=='amaze_citi'&&c.id!=='hsbc_revo').map(c=>`<div class="kv"><span>${esc(short(c.name))}</span><select style="width:110px" onchange="cardById('${c.id}').feeMonth=+this.value||undefined;save()"><option value="">–</option>${MONTHS.map((m,k)=>`<option value="${k+1}" ${+c.feeMonth===k+1?'selected':''}>${m}</option>`).join('')}</select></div>`).join('')}</div>${nav(true,'obStep=3;renderOb()')}`; }
-  if(obStep===3) h=`<h2>Monthly budgets</h2><div class="sub">Optional. Leave blank for none - you can set them later in Spend.</div><div class="card"><button class="link" onclick="applyDefaultBudgets(true);renderOb()">✨ Fill with suggested amounts (single adult, moderate)</button>${['rental','dining','groceries','shopping','transport','subscriptions','entertainment','travel','others'].map(c=>`<label class="kv"><span>${catIcon(c)} ${esc(catName(c))}</span><input class="bud" type="number" inputmode="decimal" min="0" step="10" placeholder="–" value="${S.settings.budgets[c]||''}" onchange="setBudgetQuiet('${c}',this.value)"></label>`).join('')}</div>
+  if(obStep===3) h=`<h2>Monthly budgets</h2><div class="sub">Optional. Leave blank for none - you can set them later in Spend.</div><div class="card"><button class="link" onclick="applyDefaultBudgets(true);renderOb()">✨ Fill with suggested amounts (single adult, moderate)</button>${['rental','dining','groceries','shopping','transport','subscriptions','entertainment','personalcare','travel','others'].map(c=>`<label class="kv"><span>${catIcon(c)} ${esc(catName(c))}</span><input class="bud" type="number" inputmode="decimal" min="0" step="10" placeholder="–" value="${S.settings.budgets[c]||''}" onchange="setBudgetQuiet('${c}',this.value)"></label>`).join('')}</div>
     <h2 style="margin-top:18px">You're set 🎉</h2><div class="btnrow"><button onclick="obStep=2;renderOb()">Back</button><button class="primary" onclick="finishOb(false)">Start tracking</button></div><button class="link" style="width:100%" onclick="finishOb(true)">Start with demo data instead</button>`;
   o.innerHTML=`<div class="inner">${dots}${h}</div>`; }
 function setStmt(id,v){ const c=cardById(id); const n=Math.max(1,Math.min(28,+v||1)); c.stmtDay=n; c.stmtSet=!!(+v); save(); }
