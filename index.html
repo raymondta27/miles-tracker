@@ -112,6 +112,7 @@ body.v-add #toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 .paywith{margin:4px 0 6px}.paywith .chip{min-height:38px;padding:7px 11px;font-size:13px}
 code{font-size:13px;background:var(--surface2);padding:1px 4px;border-radius:5px}
 .herotot{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}.exrent{text-align:right;padding-bottom:6px}.exrent small{display:block;font-size:12px;opacity:.85}.exrent b{font-size:20px}
+.plus{color:var(--ok)!important}.tx.reimb .miles.plus{font-weight:700}.rbtog{margin-top:10px}.rbtog button.on.plus{background:var(--ok-bg)}
 </style></head><body>
 <header><h1>✈️ SG Miles</h1><button class="hbtn" onclick="setView('guide')" aria-label="How to use">? Help</button></header>
 <main id="main"></main><div id="toast" role="status" aria-live="polite"></div>
@@ -142,7 +143,9 @@ const CATS = [
 const SOURCES=[{id:'card',name:'Card',icon:'💳'},{id:'bank',name:'Bank transfer',icon:'🏦'},{id:'paynow',name:'PayNow',icon:'⚡'},{id:'cash',name:'Cash',icon:'💵'}];
 const SRC=Object.fromEntries(SOURCES.map(x=>[x.id,x]));
 const NOBONUS_CATS=['rental','rent','loan','family','savings','tax'];
-function isCardTx(t){ return (t.src||'card')==='card'; }
+/* Reimbursement = money paid back to you (kind:'reimbursement', positive amount, received by bank/PayNow/cash). It reduces the category's spend but never touches miles, caps, min spend or 'missed'. */
+function isReimb(t){ return !!t&&t.kind==='reimbursement'; }
+function isCardTx(t){ return (t.src||'card')==='card' && !isReimb(t); }
 const CAT = Object.fromEntries(CATS.map(c=>[c.id,c])); CAT.rent=CAT.rental; // legacy id (pre-v5 data), migrated to 'rental'
 const ML = 'https://milelion.com';
 const FASTFOOD='mcdonald|kfc|burger king|starbucks|ya kun|toast box|subway|jollibee|popeyes|mos burger|long john|texas chicken|grabfood|foodpanda|deliveroo|food delivery';
@@ -572,10 +575,12 @@ function applyRecurring(state,todayYmd){
 function srcKey(t){ return isCardTx(t)?'card:'+(t.card||'?'):t.src; }
 function monthTotals(state,ym){
   const ex=new Set(state.settings&&state.settings.excludeCats||[]);
-  const o={total:0,excluded:0,byCat:{},bySrc:{},count:0,excludedByCat:{}};
-  for(const t of state.txs){ if(t.date.slice(0,7)!==ym) continue; const a=+t.amount||0;
+  const o={total:0,gross:0,reimbursed:0,excluded:0,byCat:{},grossByCat:{},reimbByCat:{},bySrc:{},count:0,reimbCount:0,excludedByCat:{}};
+  for(const t of state.txs){ if(t.date.slice(0,7)!==ym) continue; const r=isReimb(t), a=(+t.amount||0)*(r?-1:1);
     if(ex.has(t.cat)){ o.excluded+=a; o.excludedByCat[t.cat]=(o.excludedByCat[t.cat]||0)+a; continue; }
-    o.total+=a; o.count++; o.byCat[t.cat]=(o.byCat[t.cat]||0)+a; const k=srcKey(t); o.bySrc[k]=(o.bySrc[k]||0)+a; }
+    o.total+=a; o.byCat[t.cat]=(o.byCat[t.cat]||0)+a;
+    if(r){ o.reimbursed-=a; o.reimbCount++; o.reimbByCat[t.cat]=(o.reimbByCat[t.cat]||0)-a; continue; } // net totals; payment-source split shows spending only
+    o.gross+=a; o.grossByCat[t.cat]=(o.grossByCat[t.cat]||0)+a; o.count++; const k=srcKey(t); o.bySrc[k]=(o.bySrc[k]||0)+a; }
   return o;
 }
 function expenseSummary(state,ym){
@@ -584,11 +589,11 @@ function expenseSummary(state,ym){
   const cats=[...new Set([...Object.keys(cur.byCat),...Object.keys(prev.byCat),...Object.keys(budgets).filter(k=>budgets[k]>0)])]
     .filter(c=>!(state.settings.excludeCats||[]).includes(c));
   const rows=cats.map(c=>{ const a=cur.byCat[c]||0, p=prev.byCat[c]||0, b=+budgets[c]||0;
-    return {cat:c,amount:a,pct:cur.total?a/cur.total:0,prev:p,diff:a-p,budget:b,remaining:b?b-a:null,budgetPct:b?a/b:null}; })
+    return {cat:c,amount:a,gross:cur.grossByCat[c]||0,reimbursed:cur.reimbByCat[c]||0,pct:cur.total?a/cur.total:0,prev:p,diff:a-p,budget:b,remaining:b?b-a:null,budgetPct:b?a/b:null}; })
     .sort((x,y)=>y.amount-x.amount||y.budget-x.budget);
   const trend=[]; for(let k=5;k>=0;k--){ const m=ymAdd(ym,-k); trend.push({ym:m,total:monthTotals(state,m).total}); }
   // miles only over card spend
-  return {ym,total:cur.total,prevTotal:prev.total,excluded:cur.excluded,excludedByCat:cur.excludedByCat,count:cur.count,rows,bySrc:cur.bySrc,trend};
+  return {ym,total:cur.total,gross:cur.gross,reimbursed:cur.reimbursed,reimbCount:cur.reimbCount,prevTotal:prev.total,excluded:cur.excluded,excludedByCat:cur.excludedByCat,count:cur.count,rows,bySrc:cur.bySrc,trend};
 }
 /* card-only stats for a month (effective mpd & missed ignore non-card spend) */
 function cardMonthStats(state,ym,L){
@@ -597,7 +602,7 @@ function cardMonthStats(state,ym,L){
   return {spend,miles,missed,mpd:spend?miles/spend:0};
 }
 
-if(typeof module!=='undefined'&&module.exports) module.exports={FEE_INFO,FEES_CHECKED,CAP_RULES,VIA_RULES,VIA_GLOBAL,VIA_NAMES,viaRule,isClearSubscription,CHECKED,CAT,SRC,NOBONUS_CATS,parseD,ymd,pad,fmt,SOURCES,isCardTx,migrateState,applyRecurring,expenseSummary,cardMonthStats,monthTotals,ymAdd,setKfMode,CATS,DEFAULT_CARDS,cycleStart,cycleEnd,allocate,evalLedger,recommend,poolStatus,cheatSheet,cardMinStatus,ruleMatches};
+if(typeof module!=='undefined'&&module.exports) module.exports={isReimb,FEE_INFO,FEES_CHECKED,CAP_RULES,VIA_RULES,VIA_GLOBAL,VIA_NAMES,viaRule,isClearSubscription,CHECKED,CAT,SRC,NOBONUS_CATS,parseD,ymd,pad,fmt,SOURCES,isCardTx,migrateState,applyRecurring,expenseSummary,cardMonthStats,monthTotals,ymAdd,setKfMode,CATS,DEFAULT_CARDS,cycleStart,cycleEnd,allocate,evalLedger,recommend,poolStatus,cheatSheet,cardMinStatus,ruleMatches};
 
 /* ===== Editable content: card playbook + "Save more" rebate apps (dated, sourced) =====
    Everything here is plain data. Users can override it in More → Save more → "Edit content".
@@ -755,7 +760,7 @@ function _cardShort(n){return String(n||'').replace(/\s*\(.*?\)\s*/g,' ').trim()
 function _money(x){return 'S$'+Math.round(+x).toLocaleString('en-SG');}
 function _daysIn(ym){const [y,m]=ym.split('-').map(Number); return new Date(y,m,0).getDate();}
 /* month-end projection: transfers/PayNow/repeating entries are fixed; card & cash spend is extrapolated by day */
-function _projected(state,ym,day,dim,ex){ let fixed=0,vari=0; for(const t of state.txs){ if(t.date.slice(0,7)!==ym||ex.has(t.cat)) continue; if(t.recurId||t.src==='bank'||t.src==='paynow'||(CAT[t.cat]||{}).nc) fixed+=+t.amount; else vari+=+t.amount; } return fixed+vari/day*dim; }
+function _projected(state,ym,day,dim,ex){ let fixed=0,vari=0; for(const t of state.txs){ if(t.date.slice(0,7)!==ym||ex.has(t.cat)) continue; if(isReimb(t)) fixed-=+t.amount; else if(t.recurId||t.src==='bank'||t.src==='paynow'||(CAT[t.cat]||{}).nc) fixed+=+t.amount; else vari+=+t.amount; } return fixed+vari/day*dim; }
 function merchantKey(t){ return String(t.merchant||'').replace(/\[DEMO\]\s*/i,'').trim(); }
 function _nextDay(d){ const x=parseD(d); x.setDate(x.getDate()+1); return ymd(x); }
 function _fmtD(d){ const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return (+d.slice(8))+' '+M[+d.slice(5,7)-1]; }
@@ -768,7 +773,7 @@ function insights(state,ym,todayStr){
   const isCur=todayStr.slice(0,7)===ym; const dim=_daysIn(ym); const day=isCur?Math.max(1,+todayStr.slice(8)):dim;
   const budgets=state.settings.budgets||{}; const btot=Object.values(budgets).reduce((a,b)=>a+(+b||0),0);
   const bused=E.rows.filter(r=>r.budget>0).reduce((a,r)=>a+r.amount,0);
-  const summary={ym,total:E.total,prev:E.prevTotal,diff:E.total-E.prevTotal,diffPct:E.prevTotal?(E.total-E.prevTotal)/E.prevTotal:null,
+  const summary={ym,total:E.total,gross:E.gross,reimbursed:E.reimbursed,prev:E.prevTotal,diff:E.total-E.prevTotal,diffPct:E.prevTotal?(E.total-E.prevTotal)/E.prevTotal:null,
     miles:cs.miles,cardSpend:cs.spend,mpd:cs.mpd,missed:cs.missed,count:E.count,excluded:E.excluded,budgetTotal:btot,budgetUsed:bused,
     projected:isCur&&day<dim?_projected(state,ym,day,dim,ex):E.total,dayOfMonth:day,daysInMonth:dim,isCurrent:isCur};
   // per-category trend: this month, last month, 3-month average before this month
@@ -776,7 +781,7 @@ function insights(state,ym,todayStr){
   const catTrend=E.rows.map(r=>{ const avg3=(hist.reduce((a,h)=>a+(h[r.cat]||0),0))/3; const months=hist.filter(h=>h[r.cat]).length;
     return {...r,avg3,months,vsAvg:avg3?(r.amount-avg3)/avg3:null}; });
   // top merchants
-  const mm={}; for(const t of state.txs){ if(t.date.slice(0,7)!==ym||ex.has(t.cat)) continue; const k=merchantKey(t)||((CAT[t.cat]||{}).name||t.cat); const o=mm[k.toLowerCase()]=mm[k.toLowerCase()]||{name:k,amount:0,count:0,cat:t.cat}; o.amount+=+t.amount; o.count++; }
+  const mm={}; for(const t of state.txs){ if(t.date.slice(0,7)!==ym||ex.has(t.cat)||isReimb(t)) continue; const k=merchantKey(t)||((CAT[t.cat]||{}).name||t.cat); const o=mm[k.toLowerCase()]=mm[k.toLowerCase()]||{name:k,amount:0,count:0,cat:t.cat}; o.amount+=+t.amount; o.count++; }
   const merchants=Object.values(mm).sort((a,b)=>b.amount-a.amount).slice(0,5);
   const opp=[];
   // 1. budgets: over, or on pace to go over
@@ -794,15 +799,15 @@ function insights(state,ym,todayStr){
   for(const r of (state.recurring||[]).filter(r=>r.active&&!ex.has(r.cat))){ subs.push({name:r.merchant||CAT[r.cat].name,amount:+r.amount}); seen.add(String(r.merchant||'').toLowerCase()); }
   const prevM=[ymAdd(ym,-1),ymAdd(ym,-2)];
   for(const m of merchants.concat(Object.values(mm))){ const k=m.name.toLowerCase(); if(seen.has(k)||m.count!==1) continue;
-    const same=prevM.filter(pm=>state.txs.some(t=>t.date.slice(0,7)===pm&&merchantKey(t).toLowerCase()===k&&Math.abs(+t.amount-m.amount)<=Math.max(1,m.amount*0.1)));
+    const same=prevM.filter(pm=>state.txs.some(t=>!isReimb(t)&&t.date.slice(0,7)===pm&&merchantKey(t).toLowerCase()===k&&Math.abs(+t.amount-m.amount)<=Math.max(1,m.amount*0.1)));
     if(same.length>=1&&['entertainment','bills','others','shopping','insurance'].includes(m.cat)){ subs.push({name:m.name,amount:m.amount}); seen.add(k); } }
   if(subs.length){ const tot=subs.reduce((a,s)=>a+s.amount,0); opp.push({kind:'subs',sev:1,icon:'🔁',title:`${subs.length} recurring charge${subs.length>1?'s':''}: ${_money(tot)}/month`,detail:subs.slice(0,5).map(s=>`${s.name} ${_money(s.amount)}`).join(' · ')+'. Cancel any you no longer use.',value:tot*12}); }
   // 4. food delivery vs dining
-  const din=state.txs.filter(t=>t.date.slice(0,7)===ym&&t.cat==='dining'&&!ex.has('dining')); const dTot=din.reduce((a,t)=>a+(+t.amount),0);
-  const del=din.filter(t=>DELIVERY_RE.test(t.merchant||'')).reduce((a,t)=>a+(+t.amount),0);
+  const din=state.txs.filter(t=>t.date.slice(0,7)===ym&&t.cat==='dining'&&!ex.has('dining')); const dTot=din.reduce((a,t)=>a+(isReimb(t)?-1:1)*(+t.amount),0);
+  const del=din.filter(t=>!isReimb(t)&&DELIVERY_RE.test(t.merchant||'')).reduce((a,t)=>a+(+t.amount),0);
   if(del>=50&&dTot>0) opp.push({kind:'delivery',sev:del/dTot>0.4?2:1,icon:'🛵',title:`Food delivery ${_money(del)} (${Math.round(del/dTot*100)}% of dining)`,detail:'Delivery fees and menu mark-ups add up. Pick up / dine in, or buy Grab/foodpanda vouchers on HeyMax and pay with a 4 mpd card.',value:del});
   // 5. non-card spend that a card could have earned on
-  const ncTx=state.txs.filter(t=>t.date.slice(0,7)===ym&&!isCardTx(t)&&!NOBONUS_CATS.includes(t.cat)&&!ex.has(t.cat)&&!(CAT[t.cat]||{}).nc);
+  const ncTx=state.txs.filter(t=>t.date.slice(0,7)===ym&&!isCardTx(t)&&!isReimb(t)&&!NOBONUS_CATS.includes(t.cat)&&!ex.has(t.cat)&&!(CAT[t.cat]||{}).nc);
   const ncAmt=ncTx.reduce((a,t)=>a+(+t.amount),0);
   if(ncAmt>=50&&state.cards.some(c=>c.held)){ let mi=0; for(const t of ncTx){ const r=recommend(state,{amount:+t.amount,cat:t.cat,channel:CAT[t.cat].ch,pay:'wallet',fcy:false,merchant:t.merchant||'',date:t.date}); mi+=(r.list[0]||{miles:0}).miles; }
     if(mi>0) opp.push({kind:'cash',sev:1,icon:'💵',title:`${_money(ncAmt)} paid by cash/PayNow/transfer`,detail:`Where a card is accepted, the best card would have earned ≈${Math.round(mi).toLocaleString('en-SG')} miles.`,value:mi,miles:mi}); }
@@ -1017,7 +1022,8 @@ const r10=x=>Math.round(x/10)*10;
 function budgetHistory(state,todayYmd,maxMonths=6){
   const curYm=todayYmd.slice(0,7), ex=new Set(); // excluded-from-totals categories (e.g. Rental) still count here: you still need a budget for them
   const months=[]; for(let k=1;k<=maxMonths;k++) months.push(ymAdd(curYm,-k));
-  const txs=(state.txs||[]).filter(t=>months.includes((t.date||'').slice(0,7))&&!ex.has(t.cat)&&!['savings','loan','family','tax'].includes(t.cat));
+  const reimb=(state.txs||[]).filter(t=>t.kind==='reimbursement'&&months.includes((t.date||'').slice(0,7)));
+  const txs=(state.txs||[]).filter(t=>t.kind!=='reimbursement'&&months.includes((t.date||'').slice(0,7))&&!ex.has(t.cat)&&!['savings','loan','family','tax'].includes(t.cat));
   const withData=months.filter(m=>txs.some(t=>t.date.slice(0,7)===m));
   const catOf=c=>c==='fcy'?'travel':c==='contactless'?'others':c==='rent'?'rental':c;
   const by={}, oneOffs=[];
@@ -1028,6 +1034,7 @@ function budgetHistory(state,todayYmd,maxMonths=6){
     const seenElse=mk(t.merchant)&&txs.some(u=>u!==t&&u.date.slice(0,7)!==ym&&mk(u.merchant)===mk(t.merchant));
     if(c!=='rental'&&a>thr&&!seenElse&&!t.recurId){ oneOffs.push(t); continue; }
     ((by[c]=by[c]||{})[ym])=((by[c]||{})[ym]||0)+a; }
+  for(const t of reimb){ const c=catOf(t.cat), ym=t.date.slice(0,7); if(!by[c]) continue; by[c][ym]=Math.max(0,(by[c][ym]||0)-(+t.amount||0)); } // paid-back amounts reduce that month's spend
   const out={}; for(const c of Object.keys(by)) out[c]={median:med(withData.map(m=>by[c][m]||0)),months:withData.length,oneOffs:oneOffs.filter(t=>catOf(t.cat)===c).length};
   return {months:withData.length,cats:out,oneOffs};
 }
@@ -1087,7 +1094,7 @@ let view='home', viewMonth=today().slice(0,7), editingId=null, openCard=null, sh
 let draft=freshDraft(); let pickedCard=null, pickedManual=false;
 
 function freshDraft(){ const l=(S&&S.settings&&S.settings.last)||{};
-  return {src:l.src||'card',amount:'',cat:l.cat||'dining',channel:l.channel||'instore',pay:l.pay||'wallet',inApp:false,via:null,note:'',fcy:false,sea:false,merchant:'',date:today(),repeat:false,catTouched:false}; }
+  return {src:l.src||'card',amount:'',cat:l.cat||'dining',channel:l.channel||'instore',pay:l.pay||'wallet',inApp:false,via:null,note:'',kind:undefined,linked:'',fcy:false,sea:false,merchant:'',date:today(),repeat:false,catTouched:false}; }
 function isNC(){return draft.src&&draft.src!=='card';}
 function load(){ let s=null; try{s=JSON.parse(localStorage.getItem(LS_KEY));}catch(e){}
   if(!(s&&s.cards&&s.txs)){ s={version:2,cards:clone(DEFAULT_CARDS),txs:[],settings:{kf:true,onboarded:false}};
@@ -1115,7 +1122,7 @@ function backBar(title){ return `<div class="mswitch"><button onclick="setView('
 
 /* ---------- Home ---------- */
 function frequentMerchants(n){ const since=ymd(new Date(Date.now()-120*864e5)); const m={};
-  for(const t of S.txs){ if(t.date<since) continue; const k=merchantKey(t); if(!k) continue; const kk=k.toLowerCase(); const o=m[kk]=m[kk]||{name:k,count:0,last:t}; o.count++; if(t.date>=o.last.date) o.last=t; }
+  for(const t of S.txs){ if(t.date<since||isReimb(t)) continue; const k=merchantKey(t); if(!k) continue; const kk=k.toLowerCase(); const o=m[kk]=m[kk]||{name:k,count:0,last:t}; o.count++; if(t.date>=o.last.date) o.last=t; }
   return Object.values(m).filter(x=>x.count>=2||x.last.recurId).sort((a,b)=>b.count-a.count||(b.last.date>a.last.date?1:-1)).slice(0,n||6); }
 function quickAdd(name){ const f=frequentMerchants(20).find(x=>x.name===name); if(!f) return; const t=f.last; editingId=null;
   draft={...freshDraft(),src:t.src||'card',cat:t.cat,channel:t.channel||CAT[t.cat].ch,pay:t.pay||'wallet',inApp:!!t.inApp,via:t.via||null,fcy:!!t.fcy,sea:!!t.sea,merchant:merchantKey(t),amount:'',catTouched:true}; pickedCard=null; pickedManual=false; setView('add'); setTimeout(()=>{const a=$('#amt'); if(a){a.placeholder=(+t.amount).toFixed(2); a.focus();}},50); }
@@ -1135,7 +1142,7 @@ function viewHome(){
   const recent=[...S.txs].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0)).slice(0,4); const L=evalLedger(S);
   const ops=I.opportunities.slice(0,3);
   return `<div class="card hero"><div class="sub">${MONTHS[m-1]} ${y} · spent so far</div><div class="herotot"><div class="big">${money(s.total)}</div><div class="exrent"><small>Excl. rent</small><b>${money(exclRent(ym,s.total))}</b></div></div>
-     <div class="sub">${s.prev?MONTHS[(m+10)%12]+' total '+money0(s.prev):'No data for last month'}${s.isCurrent&&s.projected>s.total+1?' · on pace for '+money0(s.projected):''}</div>
+     ${s.reimbursed>0?`<div class="sub">after ${money(s.reimbursed)} paid back</div>`:''}<div class="sub">${s.prev?MONTHS[(m+10)%12]+' total '+money0(s.prev):'No data for last month'}${s.isCurrent&&s.projected>s.total+1?' · on pace for '+money0(s.projected):''}</div>
      <div class="hg"><div><small>Miles</small><b>${n0(s.miles)}</b></div><div><small>Avg mpd</small><b>${s.cardSpend?s.mpd.toFixed(2):'–'}</b></div><div><small>Missed</small><b>${n0(s.missed)}</b></div></div>
      ${bpct!==null?`<div class="sub" style="margin-top:10px">Budgets: ${money0(s.budgetUsed)} of ${money0(s.budgetTotal)} (${Math.round(bpct*100)}%)</div><div class="bar"><i style="width:${Math.min(100,bpct*100).toFixed(0)}%"></i></div>`:`<div class="sub" style="margin-top:10px"><button class="link" style="color:#fff;padding:0" onclick="editBudgets=true;goSpendMonth()">Set monthly budgets →</button></div>`}</div>
    <div class="btnrow" style="margin-top:-2px"><button class="primary" onclick="newTx()">➕ Add expense</button></div>
@@ -1153,9 +1160,9 @@ function newTx(){ editingId=null; draft=freshDraft(); pickedCard=null; pickedMan
 
 /* ---------- Add / edit ---------- */
 function viewAdd(){
-  const d=draft; const noCards=!held().length; const nc=isNC();
-  const prim=nc?PRIMARY_NC:PRIMARY_CATS;
-  let cats=(showAllCats?(nc?[...CATS.filter(c=>c.nc),...CATS.filter(c=>!c.nc&&c.id!=='fcy'&&c.id!=='contactless')]:CATS).map(c=>c.id):prim);
+  const d=draft; const noCards=!held().length; const nc=isNC(); const rb=d.kind==='reimbursement';
+  const prim=nc&&!rb?PRIMARY_NC:PRIMARY_CATS;
+  let cats=(showAllCats?(nc&&!rb?[...CATS.filter(c=>c.nc),...CATS.filter(c=>!c.nc&&c.id!=='fcy'&&c.id!=='contactless')]:CATS).map(c=>c.id):prim);
   if(!cats.includes(d.cat)) cats=[...cats.slice(0,7),d.cat];
   const det=d.fcy||d.cat==='fcy'||d.date!==today()||d.repeat||editingId;
   return `${lastHint&&!editingId?hintHtml(lastHint):''}
@@ -1164,22 +1171,24 @@ function viewAdd(){
   <div class="card">
     <div class="row"><span class="cur">S$</span><input id="amt" class="amt" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" aria-label="Amount" value="${esc(d.amount)}" oninput="draft.amount=this.value;updateReco()"></div>
     ${!editingId&&qaHtml()?`<span class="lbl">Quick add</span>${qaHtml()}`:''}
-    <span class="lbl">Paid by</span><div class="seg seg4">${SOURCES.map(x=>`<button class="${(d.src||'card')===x.id?'on':''}" onclick="setSrc('${x.id}')">${x.icon} ${esc(x.name)}</button>`).join('')}</div>
-    <span class="lbl">Category</span>
+    <div class="seg rbtog"><button class="${rb?'':'on'}" onclick="setReimb(false)">💸 Spending</button><button class="${rb?'on plus':''}" onclick="setReimb(true)">💚 Money in / paid back</button></div>
+    <span class="lbl">${rb?'Received via':'Paid by'}</span><div class="seg ${rb?'seg3':'seg4'}">${SOURCES.filter(x=>!rb||x.id!=='card').map(x=>`<button class="${(d.src||'card')===x.id?'on':''}" onclick="setSrc('${x.id}')">${x.icon} ${esc(x.name)}</button>`).join('')}</div>
+    <span class="lbl">${rb?'Reduces spending in':'Category'}</span>
     <div class="catpick">${cats.slice(0,showAllCats?99:8).map(c=>`<button class="chip ${d.cat===c?'on':''}" onclick="setCat('${c}')"><span>${catIcon(c)}</span>${esc((CAT[c]||{short:c}).short)}</button>`).join('')}</div>
     <button class="link" onclick="showAllCats=!showAllCats;render()">${showAllCats?'Fewer categories':'More categories (foreign, bills, insurance…)'}</button>
-    <input placeholder="${nc?'Payee / note (e.g. Landlord, Mum)':'Merchant (e.g. Grab, Shopee) - optional'}" aria-label="Merchant" value="${esc(d.merchant)}" oninput="draft.merchant=this.value;updateReco()" onchange="merchantGuess(this.value)" style="margin-top:6px">
+    <input placeholder="${rb?'From (e.g. Friend repayment - dinner)':nc?'Payee / note (e.g. Landlord, Mum)':'Merchant (e.g. Grab, Shopee) - optional'}" aria-label="Merchant" value="${esc(d.merchant)}" oninput="draft.merchant=this.value;updateReco()" onchange="merchantGuess(this.value)" style="margin-top:6px">
     ${nc?'':`<div class="seg">
       <button class="${d.channel==='instore'?'on':''}" onclick="setChannel('instore')">🏬 In-store</button>
       <button class="${d.channel==='online'?'on':''}" onclick="setChannel('online')">🌐 Online / in-app</button></div>
     <span class="lbl">Pay with</span><div class="chips paywith">${payOptions(d.channel).map(([k,l])=>`<button class="chip ${payWithKey()===k?'on':''}" onclick="setPayWith('${k}')">${l}</button>`).join('')}</div>`}
     <div id="bestline" class="bestline"></div>
-    <details ${det?'open':''}><summary>Date${nc?'':', foreign currency'}, repeat${d.date!==today()?' · '+esc(d.date):''}</summary>
+    <details ${det?'open':''}><summary>Date${rb?', linked entry, note':(nc?'':', foreign currency')+', repeat'}${d.date!==today()?' · '+esc(d.date):''}</summary>
       <label>Date<input type="date" value="${esc(d.date)}" onchange="draft.date=this.value||today();updateReco()"></label>
       ${nc?'':`<label class="tog"><input type="checkbox" ${d.fcy||d.cat==='fcy'?'checked':''} ${d.cat==='fcy'?'disabled':''} onchange="draft.fcy=this.checked;render()"> Foreign currency (charged in non-SGD)</label>
       ${d.fcy||d.cat==='fcy'?`<label class="tog"><input type="checkbox" ${d.sea?'checked':''} onchange="draft.sea=this.checked;updateReco()"> Charged in IDR / MYR / THB / VND</label>`:''}`}
       <input placeholder="Note (optional)" aria-label="Note" value="${esc(d.note||'')}" oninput="draft.note=this.value" style="margin-top:8px">
-      <label class="tog repeat"><input type="checkbox" ${d.repeat?'checked':''} onchange="draft.repeat=this.checked"> 🔁 Repeat monthly (e.g. rent, subscriptions)</label>
+      ${rb?linkedPicker(d):''}
+      ${rb?'':`<label class="tog repeat"><input type="checkbox" ${d.repeat?'checked':''} onchange="draft.repeat=this.checked"> 🔁 Repeat monthly (e.g. rent, subscriptions)</label>`}
     </details>
   </div>
   <div id="reco"></div>
@@ -1188,11 +1197,15 @@ function viewAdd(){
 function hintHtml(h){ return `<div class="hint">💡 <b>Save more on ${esc(catName(h.cat))}:</b> ${esc(h.tip)}
   <div><button class="link" onclick="saveCat='${h.cat}';setView('save')">Apps & how-to →</button><button class="link" onclick="lastHint=null;render()">Dismiss</button><button class="link" onclick="S.settings.saveHints=false;save();lastHint=null;render();toast('Tips after saving turned off (More → Settings)')">Don't show</button></div></div>`; }
 function merchantGuess(v){ draft.merchant=v; if(draft.catTouched) return updateReco(); const g=guessCat(v); if(g&&g!==draft.cat){ if(CAT[g].nc&&!isNC()){ updateReco(); return; } draft.cat=g; if(!editingId) draft.channel=CAT[g].ch; render(); toast('Category set to '+catName(g)+' - tap another to change'); } else updateReco(); }
+function setReimb(on){ pickedManual=false; draft.kind=on?'reimbursement':undefined; if(on){ if((draft.src||'card')==='card') draft.src='paynow'; if(CAT[draft.cat]&&CAT[draft.cat].nc) draft.cat='dining'; draft.repeat=false; } else draft.linked=''; render(); }
+function linkedPicker(d){ const since=ymd(new Date(parseD(d.date||today()).getTime()-62*864e5)); const opts=S.txs.filter(t=>!isReimb(t)&&t.cat===d.cat&&t.date>=since&&t.id!==editingId).sort((a,b)=>a.date<b.date?1:-1).slice(0,30);
+  return `<label>Paid back for (optional)<select onchange="draft.linked=this.value;updateReco()"><option value="">- not linked -</option>${opts.map(t=>`<option value="${t.id}" ${d.linked===t.id?'selected':''}>${esc(t.date)} · ${esc(merchantKey(t)||catName(t.cat))} · ${money(t.amount)}</option>`).join('')}${d.linked&&!opts.some(t=>t.id===d.linked)?`<option value="${esc(d.linked)}" selected>${esc(d.linked)}</option>`:''}</select></label>`; }
 function setSrc(v){ pickedManual=false; draft.src=v; const c=draft.cat, nc=CAT[c].nc;
+  if(draft.kind==='reimbursement'){ render(); return; }
   if(v!=='card'&&!editingId&&!nc){ if(v==='bank') draft.cat='rental'; else if(v==='paynow'&&!['dining','groceries','others'].includes(c)) draft.cat='family'; else if(['fcy','contactless'].includes(c)) draft.cat='others'; }
   if(v==='card'&&nc) draft.cat='dining'; render(); }
 function setCat(c){ pickedManual=false; draft.cat=c; draft.catTouched=true; const def=CAT[c].ch; if(!editingId) draft.channel=def; if(c==='fcy') draft.fcy=true; render(); }
-function draftTx(){ const note=(draft.note||'').trim()||undefined; if(isNC()) return {src:draft.src,amount:+draft.amount||0,cat:draft.cat,channel:'online',fcy:false,merchant:draft.merchant,date:draft.date,card:null,note};
+function draftTx(){ const note=(draft.note||'').trim()||undefined; if(isNC()){ const o={src:draft.src,amount:+draft.amount||0,cat:draft.cat,channel:'online',fcy:false,merchant:draft.merchant,date:draft.date,card:null,note}; if(draft.kind==='reimbursement'){ o.kind='reimbursement'; if(draft.linked) o.linked=draft.linked; } return o; }
   const f=!!draft.fcy||draft.cat==='fcy'; const {catTouched,...dd}=draft; const via=draft.via&&payOptions(draft.channel).some(([k])=>k===draft.via)?draft.via:undefined;
   return {...dd,note,via,amount:+draft.amount||0,fcy:f,sea:f&&!!draft.sea,inApp:draft.channel==='online'&&!!draft.inApp,pay:draft.channel==='instore'?draft.pay:undefined}; }
 /* "Pay with": wallet / intermediary - changes eligibility (see engine VIA_RULES) */
@@ -1206,6 +1219,9 @@ function setPayWith(k){ pickedManual=false; const d=draft; d.via=null;
 function setChannel(ch){ pickedManual=false; draft.channel=ch; if(draft.via&&!payOptions(ch).some(([k])=>k===draft.via)) draft.via=null; render(); }
 function updateReco(){
   const box=$('#reco'); if(!box) return; const d=draftTx();
+  if(draft.kind==='reimbursement'){ const sv=SRC[draft.src]||{name:draft.src}; const lt=draft.linked&&S.txs.find(t=>t.id===draft.linked);
+    box.innerHTML=`<div class="card nc"><div class="h3">💚 Paid back via ${esc(sv.name)}</div><div class="sub">Reduces <b>${esc(catName(d.cat))}</b> spending for ${esc(d.date.slice(0,7))} by ${d.amount>0?money(d.amount):'this amount'} (expense totals, budgets, 12-month view). Miles, card caps, minimum spend and "miles missed" are not affected${lt?` - the original ${esc(merchantKey(lt)||catName(lt.cat))} entry keeps its miles`:''}.</div></div>`;
+    const bl=$('#bestline'); if(bl) bl.innerHTML=''; const b=$('#saveBtn'); if(b) b.textContent=(editingId?'Update':'Save')+(d.amount>0?` +${money(d.amount)} paid back`:' paid back'); return; }
   if(isNC()){ const sv=SRC[draft.src]; box.innerHTML=`<div class="card nc"><div class="h3">${sv.icon} ${esc(sv.name)}</div><div class="sub">Earns 0 miles. Not counted in card caps, minimum spend, effective mpd or "miles missed" - it only shows in <b>Expenses</b>.${(S.settings.excludeCats||[]).includes(d.cat)?' This category is excluded from expense totals (change in More → Backup & settings).':''}</div></div>`;
     const bl=$('#bestline'); if(bl) bl.innerHTML=''; const b=$('#saveBtn'); if(b) b.textContent=(editingId?'Update':'Save')+(d.amount>0?` ${money(d.amount)} via ${sv.name}`:''); return; }
   if(!held().length){box.innerHTML='';return;}
@@ -1248,13 +1264,12 @@ function saveTx(){
   if(editingId){ t=S.txs.find(t=>t.id===editingId); const keep={id:t.id,ts:t.ts,recurId:t.recurId,auto:t.auto,demo:t.demo};
     Object.keys(t).forEach(k=>delete t[k]); Object.assign(t,rec,keep); Object.keys(t).forEach(k=>t[k]===undefined&&delete t[k]); editingId=null; }
   else { t={...rec,id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),ts:Date.now()}; S.txs.push(t); }
-  syncRecurring(t,!!draft.repeat);
-  S.settings.last={src:rec.src,cat:rec.cat,channel:draft.channel,pay:draft.pay};
+  if(!isReimb(t)){ syncRecurring(t,!!draft.repeat); S.settings.last={src:rec.src,cat:rec.cat,channel:draft.channel,pay:draft.pay}; }
   save(); const keepDate=draft.date; const c=cardById(t.card);
-  const H=content().byCat[t.cat]; lastHint=(!wasEdit&&S.settings.saveHints!==false&&H&&H.tip)?{cat:t.cat,tip:H.tip}:null;
+  const H=content().byCat[t.cat]; lastHint=(!wasEdit&&!isReimb(t)&&S.settings.saveHints!==false&&H&&H.tip)?{cat:t.cat,tip:H.tip}:null;
   draft=freshDraft(); if(keepDate!==today()) draft.date=keepDate; pickedCard=null; pickedManual=false; showAllCats=false;
   if(wasEdit){ toast('Updated'); goSpendMonth(); return; }
-  const id=t.id; toast(`Saved ${money(t.amount)}${c?' on '+short(c.name):''} ✓`,'Undo',()=>{ S.txs=S.txs.filter(x=>x.id!==id); save(); render(); toast('Removed'); });
+  const id=t.id; toast(isReimb(t)?`Saved +${money(t.amount)} paid back ✓`:`Saved ${money(t.amount)}${c?' on '+short(c.name):''} ✓`,'Undo',()=>{ S.txs=S.txs.filter(x=>x.id!==id); save(); render(); toast('Removed'); });
   render(); window.scrollTo(0,0);
 }
 
@@ -1334,7 +1349,7 @@ function syncRecurring(t,on){
   } else if(r){ r.active=false; }
 }
 function stopRecurring(id){ const r=S.recurring.find(x=>x.id===id); if(r){ r.active=false; save(); render(); toast('Stopped repeating'); } }
-function editTx(id){ const t=S.txs.find(t=>t.id===id); if(!t) return; editingId=id; const rr=t.recurId&&S.recurring.find(x=>x.id===t.recurId); draft={src:t.src||'card',repeat:!!(rr&&rr.active),amount:t.amount,cat:t.cat,channel:t.channel||'online',pay:t.pay||(t.wallet===false?'tap':'wallet'),inApp:!!t.inApp,via:t.via||null,note:t.note||'',fcy:!!t.fcy,sea:!!t.sea,merchant:t.merchant||'',date:t.date,catTouched:true}; pickedCard=t.card; pickedManual=true; lastHint=null; setView('add'); }
+function editTx(id){ const t=S.txs.find(t=>t.id===id); if(!t) return; editingId=id; const rr=t.recurId&&S.recurring.find(x=>x.id===t.recurId); draft={src:t.src||'card',repeat:!!(rr&&rr.active),amount:t.amount,cat:t.cat,channel:t.channel||'online',pay:t.pay||(t.wallet===false?'tap':'wallet'),inApp:!!t.inApp,via:t.via||null,note:t.note||'',kind:t.kind,linked:t.linked||'',fcy:!!t.fcy,sea:!!t.sea,merchant:t.merchant||'',date:t.date,catTouched:true}; pickedCard=t.card; pickedManual=true; lastHint=null; setView('add'); }
 function cancelEdit(){ editingId=null; draft=freshDraft(); pickedCard=null; pickedManual=false; goSpendMonth(); }
 function delTx(id){ const k=S.txs.findIndex(x=>x.id===id); if(k<0) return; const t=S.txs[k]; S.txs.splice(k,1);
   const r=t.recurId&&S.recurring.find(x=>x.id===t.recurId); if(r&&r.active&&confirm('This entry repeats monthly. Stop repeating it too? (Cancel = keep repeating)')) r.active=false;
@@ -1492,7 +1507,7 @@ function viewExpenses(ins){
   const [y,m]=viewMonth.split('-').map(Number); const E=expenseSummary(S,viewMonth);
   const diffPct=E.prevTotal?(E.total-E.prevTotal)/E.prevTotal:null;
   const arrow=(d)=>Math.abs(d)<0.005?'<span class="sub">= last month</span>':d>0?`<span class="up">▲ ${money(d)}</span>`:`<span class="down">▼ ${money(-d)}</span>`;
-  const rows=E.rows.filter(r=>r.amount>0||r.prev>0);
+  const rows=E.rows.filter(r=>r.amount!==0||r.prev>0||r.reimbursed>0);
   const maxCat=Math.max(1,...rows.map(r=>r.amount));
   const srcs=Object.entries(E.bySrc).sort((a,b)=>b[1]-a[1]); const maxSrc=Math.max(1,...srcs.map(x=>x[1]));
   const maxT=Math.max(1,...E.trend.map(t=>t.total));
@@ -1501,7 +1516,7 @@ function viewExpenses(ins){
   return `
   <div class="mswitch"><button onclick="shiftMonth(-1)">‹</button><b>${MONTHS[m-1]} ${y}</b><button onclick="shiftMonth(1)">›</button></div>
   <div class="stats">
-    <div><small>Total spend</small><b>${money(E.total)}</b></div>
+    <div><small>Total spend${E.reimbursed?' (net)':''}</small><b>${money(E.total)}</b>${E.reimbursed?`<small class="sub">${money(E.gross)} spent − <span class="plus">${money(E.reimbursed)} paid back</span></small>`:''}</div>
     <div><small>vs ${MONTHS[(m+10)%12]}</small><b class="${diffPct===null?'':diffPct>0?'red':'green'}">${diffPct===null?'–':(diffPct>0?'▲ ':'▼ ')+Math.abs(diffPct*100).toFixed(0)+'%'}</b></div>
     <div><small>Entries</small><b>${E.count}</b></div>
     <div><small>Excluded transfers</small><b>${money(E.excluded)}</b></div>
@@ -1509,7 +1524,7 @@ function viewExpenses(ins){
   ${ins||''}
   <div class="card"><div class="h3">By category <small>(vs last month)</small></div>
    ${rows.length?rows.map(r=>{const c=CAT[r.cat]||{icon:'•',name:r.cat}; return `<div class="erow"><div class="ehead"><span>${c.icon} ${esc(c.name)}</span><span><b>${money(r.amount)}</b> <small>${(r.pct*100).toFixed(0)}%</small></span></div>
-     <div class="bar thin"><i class="blue" style="width:${(r.amount/maxCat*100).toFixed(1)}%"></i></div><div class="sub right">${arrow(r.diff)}</div></div>`;}).join(''):'<div class="sub">No expenses this month.</div>'}
+     <div class="bar thin"><i class="blue" style="width:${Math.max(0,r.amount/maxCat*100).toFixed(1)}%"></i></div><div class="sub right">${r.reimbursed?`<span class="plus">${money(r.reimbursed)} paid back</span> (spent ${money(r.gross)}) · `:''}${arrow(r.diff)}</div></div>`;}).join(''):'<div class="sub">No expenses this month.</div>'}
    ${E.excluded?`<div class="sub">Not counted: ${Object.entries(E.excludedByCat).map(([c,v])=>`${(CAT[c]||{icon:''}).icon} ${esc((CAT[c]||{name:c}).name)} ${money(v)}`).join(', ')} (More → Backup & settings)</div>`:''}
   </div>
   <div class="card"><div class="h3">By payment source</div>
@@ -1527,6 +1542,8 @@ function viewExpenses(ins){
 }
 function txRow(t,L){ const r=L.res[t.id]||{}; const c=cardById(t.card); const opt=cardById(r.optimal); const dt=`${esc(t.date.slice(8))} ${MONTHS[+t.date.slice(5,7)-1]}`;
   const acts=`<div class="acts"><button onclick="editTx('${t.id}')" aria-label="Edit">✏️</button><button onclick="delTx('${t.id}')" aria-label="Delete">🗑️</button></div>`;
+  if(isReimb(t)){ const sv=SRC[t.src]||{icon:'?',name:t.src}; const lt=t.linked&&S.txs.find(x=>x.id===t.linked); return `<div class="tx reimb"><div class="grow"><div><b>${esc(merchantKey(t)||'Paid back')}</b> <small class="sub">${dt}</small></div>
+      <div class="sub">💚 Paid back · ${catIcon(t.cat)} ${esc(catName(t.cat))} · ${sv.icon} ${esc(sv.name)}${lt?` · ↩ for ${esc(merchantKey(lt)||catName(lt.cat))} ${esc(lt.date.slice(8))} ${MONTHS[+lt.date.slice(5,7)-1]} (${money(lt.amount)})`:t.linked?' · ↩ linked entry not found':''}${t.note?` · <i>${esc(t.note)}</i>`:''}</div></div><div class="miles plus">+${money(t.amount)}<br><small>no miles effect</small></div>${acts}</div>`; }
   if(!isCardTx(t)){ const sv=SRC[t.src]||{icon:'?',name:t.src}; return `<div class="tx"><div class="grow"><div><b>${esc(merchantKey(t)||catName(t.cat))}</b> <small class="sub">${dt}</small>${t.recurId?' <small title="repeats monthly">🔁</small>':''}</div>
       <div class="sub">${catIcon(t.cat)} ${esc(catName(t.cat))} · ${sv.icon} ${esc(sv.name)}${t.note?` · <i>${esc(t.note)}</i>`:''}</div></div><div class="miles">${money(t.amount)}<br><small>no miles</small></div>${acts}</div>`; }
   return `<div class="tx"><div class="grow"><div><b>${esc(merchantKey(t)||catName(t.cat))}</b> <small class="sub">${dt}</small>${t.recurId?' <small title="repeats monthly">🔁</small>':''}</div>
@@ -1591,27 +1608,27 @@ function exclRent(ym,total){ const t=monthTotals(S,ym); return (total!==undefine
 function yearData(endYm){
   const months=[]; for(let k=11;k>=0;k--) months.push(ymAdd(endYm,-k));
   const L=evalLedger(S);
-  const per=months.map(ym=>{ const t=monthTotals(S,ym); const cs=cardMonthStats(S,ym,L); return {ym,total:t.total,byCat:t.byCat,miles:cs.miles,cardSpend:cs.spend,count:t.count}; });
+  const per=months.map(ym=>{ const t=monthTotals(S,ym); const cs=cardMonthStats(S,ym,L); return {ym,total:t.total,reimbursed:t.reimbursed,byCat:t.byCat,miles:cs.miles,cardSpend:cs.spend,count:t.count}; });
   const catTot={}; for(const p of per) for(const [c,v] of Object.entries(p.byCat)) catTot[c]=(catTot[c]||0)+v;
   const active=per.filter(p=>p.count>0).length;
-  return {months,per,catTot,active,total:per.reduce((s,p)=>s+p.total,0),miles:per.reduce((s,p)=>s+p.miles,0),cardSpend:per.reduce((s,p)=>s+p.cardSpend,0)};
+  return {months,per,catTot,active,reimbursed:per.reduce((s,p)=>s+p.reimbursed,0),total:per.reduce((s,p)=>s+p.total,0),miles:per.reduce((s,p)=>s+p.miles,0),cardSpend:per.reduce((s,p)=>s+p.cardSpend,0)};
 }
 function viewYear(){
   const endYm=today().slice(0,7); const Y=yearData(endYm);
   const cats=Object.entries(Y.catTot).sort((a,b)=>b[1]-a[1]); const top=cats.slice(0,5).map(x=>x[0]);
   const colorOf=c=>{ const k=top.indexOf(c); return PALETTE[k<0?5:k]; };
-  const W=360,H=170,pl=4,pb=18,bw=(W-pl)/12; const max=Math.max(1,...Y.per.map(p=>p.total));
+  const W=360,H=170,pl=4,pb=18,bw=(W-pl)/12; const max=Math.max(1,...Y.per.map(p=>Object.values(p.byCat).reduce((s,v)=>s+Math.max(0,v),0)));
   const bars=Y.per.map((p,i)=>{ let y=H-pb; const segs=[]; const parts=[...top.map(c=>[c,p.byCat[c]||0]),['__other',Object.entries(p.byCat).filter(([c])=>!top.includes(c)).reduce((s,[,v])=>s+v,0)]];
-    for(const [c,v] of parts){ if(!v) continue; const h=v/max*(H-pb-16); y-=h; segs.push(`<rect x="${(pl+i*bw+3).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw-6).toFixed(1)}" height="${h.toFixed(1)}" fill="${c==='__other'?PALETTE[5]:colorOf(c)}" rx="2"><title>${MONTHS[+p.ym.slice(5)-1]} ${esc(c==='__other'?'Other':catName(c))}: ${money0(v)}</title></rect>`); }
+    for(const [c,v] of parts){ if(!(v>0)) continue; const h=v/max*(H-pb-16); y-=h; segs.push(`<rect x="${(pl+i*bw+3).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw-6).toFixed(1)}" height="${h.toFixed(1)}" fill="${c==='__other'?PALETTE[5]:colorOf(c)}" rx="2"><title>${MONTHS[+p.ym.slice(5)-1]} ${esc(c==='__other'?'Other':catName(c))}: ${money0(v)}</title></rect>`); }
     return `<g class="ybar" onclick="viewMonth='${p.ym}';goSpendMonth()">${segs.join('')}<rect x="${(pl+i*bw).toFixed(1)}" y="0" width="${bw.toFixed(1)}" height="${H}" fill="transparent"/>${p.total?`<text x="${(pl+i*bw+bw/2).toFixed(1)}" y="${(y-3).toFixed(1)}" text-anchor="middle" class="yl">${kfmt(p.total)}</text>`:''}<text x="${(pl+i*bw+bw/2).toFixed(1)}" y="${H-4}" text-anchor="middle" class="ym ${p.ym===endYm?'on':''}">${MONTHS[+p.ym.slice(5)-1].slice(0,1)}${i===0||p.ym.endsWith('-01')?'<tspan class="yy">'+p.ym.slice(2,4)+'</tspan>':''}</text></g>`; }).join('');
   const maxM=Math.max(1,...Y.per.map(p=>p.miles)); const MH=80;
   const mbars=Y.per.map((p,i)=>{ const h=p.miles/maxM*(MH-26); return `<rect x="${(pl+i*bw+5).toFixed(1)}" y="${(MH-14-h).toFixed(1)}" width="${(bw-10).toFixed(1)}" height="${h.toFixed(1)}" fill="var(--ok-bar)" rx="2"><title>${MONTHS[+p.ym.slice(5)-1]}: ${n0(p.miles)} miles</title></rect>${p.miles?`<text x="${(pl+i*bw+bw/2).toFixed(1)}" y="${(MH-17-h).toFixed(1)}" text-anchor="middle" class="yl">${kfmt(p.miles)}</text>`:''}<text x="${(pl+i*bw+bw/2).toFixed(1)}" y="${MH-3}" text-anchor="middle" class="ym">${MONTHS[+p.ym.slice(5)-1].slice(0,1)}</text>`; }).join('');
   const div=Math.max(1,Y.active); const budgets=S.settings.budgets||{};
-  const spark=c=>{ const vals=Y.per.map(p=>p.byCat[c]||0), mx=Math.max(1,...vals); return `<svg class="spark" viewBox="0 0 72 18" preserveAspectRatio="none">${vals.map((v,i)=>`<rect x="${i*6}" y="${(18-v/mx*17).toFixed(1)}" width="4.5" height="${(v/mx*17).toFixed(1)}" fill="${colorOf(c)}"/>`).join('')}</svg>`; };
+  const spark=c=>{ const vals=Y.per.map(p=>Math.max(0,p.byCat[c]||0)), mx=Math.max(1,...vals); return `<svg class="spark" viewBox="0 0 72 18" preserveAspectRatio="none">${vals.map((v,i)=>`<rect x="${i*6}" y="${(18-v/mx*17).toFixed(1)}" width="4.5" height="${(v/mx*17).toFixed(1)}" fill="${colorOf(c)}"/>`).join('')}</svg>`; };
   const last3=c=>[1,2,3].map(k=>{const p=Y.per[11-k]; return p?p.byCat[c]||0:0;}).reduce((a,b)=>a+b,0)/3;
   const noData=!Y.total; const yRent=(Y.catTot.rental||0)+(Y.catTot.rent||0);
   return `<div class="stats">
-    <div><small>12-month spend</small><b>${money0(Y.total)}</b><small class="sub">Excl. rent ${money0(Y.total-yRent)}</small></div>
+    <div><small>12-month spend</small><b>${money0(Y.total)}</b><small class="sub">Excl. rent ${money0(Y.total-yRent)}${Y.reimbursed?` · net of <span class="plus">${money0(Y.reimbursed)} paid back</span>`:''}</small></div>
     <div><small>Monthly average</small><b>${money0(Y.total/div)}</b><small class="sub">Excl. rent ${money0((Y.total-yRent)/div)} · ${Y.active} month${Y.active===1?'':'s'} with data</small></div>
     <div><small>Miles (12 months)</small><b>${n0(Y.miles)}</b></div>
     <div><small>Avg mpd on cards</small><b>${Y.cardSpend?(Y.miles/Y.cardSpend).toFixed(2):'–'}</b></div></div>
