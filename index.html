@@ -113,6 +113,8 @@ body.v-add #toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 code{font-size:13px;background:var(--surface2);padding:1px 4px;border-radius:5px}
 .herotot{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}.exrent{text-align:right;padding-bottom:6px}.exrent small{display:block;font-size:12px;opacity:.85}.exrent b{font-size:20px}
 .plus{color:var(--ok)!important}.tx.reimb .miles.plus{font-weight:700}.rbtog{margin-top:10px}.rbtog button.on.plus{background:var(--ok-bg)}
+
+.demobar{background:#fff4d6;color:#5a4300;border:1px solid #f0c64a;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:14px}.demobar button{display:block;width:100%;margin-top:8px;font-weight:600}
 </style></head><body>
 <header><h1>✈️ SG Miles</h1><button class="hbtn" onclick="setView('guide')" aria-label="How to use">? Help</button></header>
 <main id="main"></main><div id="toast" role="status" aria-live="polite"></div>
@@ -931,7 +933,7 @@ function mergeStates(local,remote,now){
   return out;
 }
 /* What goes into data.json: the export schema minus device-only preferences. */
-function cloudView(s){ const o=JSON.parse(JSON.stringify(s)); o.settings=o.settings||{}; for(const k of SYNC_LOCAL_SETTINGS) delete o.settings[k]; return o; }
+function cloudView(s){ const o=JSON.parse(JSON.stringify(s)); o.settings=o.settings||{}; o.txs=(o.txs||[]).filter(t=>!t.demo); for(const k of SYNC_LOCAL_SETTINGS) delete o.settings[k]; return o; }
 
 /* ---- base64 (UTF-8 safe, browser + node) ---- */
 function b64encode(str){ if(typeof Buffer!=='undefined') return Buffer.from(str,'utf8').toString('base64'); return btoa(unescape(encodeURIComponent(str))); }
@@ -1081,6 +1083,9 @@ if(typeof module!=='undefined'&&module.exports){ if(typeof ymAdd==='undefined'){
 
 /* ===== UI (v5) ===== */
 const LS_KEY='sgMilesTracker.v2'; // never change: existing users' data lives here
+const DEMO_KEY='sgMilesTracker.demo'; // demo sandbox: separate copy, never synced. Present = demo mode.
+function inDemo(){ try{ return !!localStorage.getItem(DEMO_KEY); }catch(e){ return false; } }
+function curKey(){ return inDemo()?DEMO_KEY:LS_KEY; }
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone=o=>JSON.parse(JSON.stringify(o));
@@ -1096,13 +1101,13 @@ let draft=freshDraft(); let pickedCard=null, pickedManual=false;
 function freshDraft(){ const l=(S&&S.settings&&S.settings.last)||{};
   return {src:l.src||'card',amount:'',cat:l.cat||'dining',channel:l.channel||'instore',pay:l.pay||'wallet',inApp:false,via:null,note:'',kind:undefined,linked:'',fcy:false,sea:false,merchant:'',date:today(),repeat:false,catTouched:false}; }
 function isNC(){return draft.src&&draft.src!=='card';}
-function load(){ let s=null; try{s=JSON.parse(localStorage.getItem(LS_KEY));}catch(e){}
+function load(){ let s=null; try{s=JSON.parse(localStorage.getItem(curKey()));}catch(e){}
   if(!(s&&s.cards&&s.txs)){ s={version:2,cards:clone(DEFAULT_CARDS),txs:[],settings:{kf:true,onboarded:false}};
     try{ const old=JSON.parse(localStorage.getItem('sgMilesTracker.v1')); if(old&&old.txs&&old.txs.length) s.txs=old.txs.filter(t=>DEFAULT_CARDS.some(c=>c.id===t.card)); }catch(e){} }
   migrateState(s); setKfMode(s.settings.kf!==false); return s; }
 let _prevSaved=null; // snapshot of the last saved state, used to stamp edits for cloud sync
-function save(){ if(_prevSaved) stampChanges(_prevSaved,S,Date.now()); const str=JSON.stringify(S); localStorage.setItem(LS_KEY,str); _prevSaved=JSON.parse(str); if(typeof syncAfterSave==='function') syncAfterSave(); }
-function saveNoStamp(){ const str=JSON.stringify(S); localStorage.setItem(LS_KEY,str); _prevSaved=JSON.parse(str); }
+function save(){ if(_prevSaved) stampChanges(_prevSaved,S,Date.now()); const str=JSON.stringify(S); localStorage.setItem(curKey(),str); _prevSaved=JSON.parse(str); if(typeof syncAfterSave==='function') syncAfterSave(); }
+function saveNoStamp(){ const str=JSON.stringify(S); localStorage.setItem(curKey(),str); _prevSaved=JSON.parse(str); }
 function held(){return S.cards.filter(c=>c.held);}
 function cardById(id){return S.cards.find(c=>c.id===id);}
 function toast(m,act,fn){const t=$('#toast'); t.innerHTML=esc(m)+(act?` <button id="toastAct">${esc(act)}</button>`:''); if(act) $('#toastAct').onclick=()=>{t.classList.remove('show'); fn();};
@@ -1117,7 +1122,7 @@ function applyTheme(){ document.documentElement.dataset.theme=S.settings.theme||
 
 function setView(v){ view=v; document.body.className='v-'+v; const nv=MAIN_VIEWS.includes(v)?v:'more'; document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===nv)); render(); window.scrollTo(0,0); }
 function render(){ const m=$('#main'); const V={sync:viewSync,budgets:viewBudgetWizard,home:viewHome,add:viewAdd,spend:viewSpend,exp:viewSpend,miles:viewMiles,month:viewMiles,more:viewMore,cards:viewCards,data:viewData,best:viewBest,playbook:viewPlaybook,save:viewSave,guide:viewGuide};
-  m.innerHTML=(V[view]||viewHome)(); if(view==='add') updateReco(); renderOb(); }
+  m.innerHTML=(inDemo()?`<div class="demobar">🧪 <b>Demo mode</b> - sample data only. Your real data is safe and not synced from here.<button onclick="exitDemo()">Exit demo · back to my data</button></div>`:'')+(V[view]||viewHome)(); if(view==='add') updateReco(); renderOb(); }
 function backBar(title){ return `<div class="mswitch"><button onclick="setView('more')" aria-label="Back">‹</button><b>${esc(title)}</b><span style="width:52px"></span></div>`; }
 
 /* ---------- Home ---------- */
@@ -1297,7 +1302,7 @@ function viewMore(){ const it=(v,ic,t,s,fn)=>`<button class="item" onclick="${fn
    ${it('cards','💳','Cards',`${held().length} cards ticked · statement dates, fee months, rules`)}
    ${it('data','💾','Backup & settings','Export / import, theme, demo data, expense settings')}
    ${it('guide','❓','How to use','Install on iPhone, 10-second add, reading the advice')}
-   ${it('','🚀','Run setup again','Cards, statement dates, budgets',"obStep=0;S.settings.onboarded=false;render()")}</div>
+   ${it('','🚀','Run setup again','Cards, statement dates, budgets',"confirmRerun()")}</div>
    <div class="sub" style="text-align:center">Card data checked ${CHECKED} · fees checked ${FEES_CHECKED} · app content checked ${CONTENT_CHECKED}. ${syncCfg().token?'Synced to your private GitHub repo.':'Data stays on this phone unless you turn on Sync.'}</div>`; }
 
 function viewPlaybook(){ const C=content(); const hs=held();
@@ -1497,7 +1502,7 @@ function viewData(){
 }
 function exportJson(){ const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='miles-tracker-backup-'+today()+'.json'; document.body.appendChild(a); a.click(); a.remove(); toast('Exported'); }
 function importFile(f){ if(!f) return; const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result); if(!o.cards||!o.txs) throw new Error('Not a tracker backup'); if(!confirm(`Import ${o.txs.length} transactions and ${o.cards.length} cards? This replaces current data.`)) return; S=migrateState(o); setKfMode(S.settings.kf!==false); const n=applyRecurring(S,today()); save(); toast('Imported'+(n?` (+${n} recurring)`:'')); render(); }catch(e){ alert('Import failed: '+e.message); } }; rd.readAsText(f); }
-function clearDemo(){ S.txs=S.txs.filter(t=>!t.demo); save(); toast('Demo removed'); render(); }
+function clearDemo(){ if(inDemo()) return exitDemo(); S.txs=S.txs.filter(t=>!t.demo); save(); toast('Demo removed'); render(); }
 function clearAll(){ if(!confirm('Delete ALL transactions? Export a backup first if unsure.')) return; S.txs=[]; save(); render(); }
 
 /* ---------- Expenses (all payment sources) ---------- */
@@ -1552,6 +1557,9 @@ function txRow(t,L){ const r=L.res[t.id]||{}; const c=cardById(t.card); const op
       <div class="miles">${money(t.amount)}<br><b>${n0(r.miles||0)}</b><small> mi</small></div>${acts}</div>`; }
 
 function loadDemo(){
+  if(!inDemo()){ // sandbox: copy cards/settings only, real data stays untouched under LS_KEY and in the cloud
+    const d=clone(S); d.txs=[]; d.recurring=[]; d.tombstones={tx:{},rec:{}}; d.stamps={}; d.settings.budgets=clone(S.settings.budgets||{});
+    localStorage.setItem(DEMO_KEY,JSON.stringify(d)); S=d; _prevSaved=clone(S); clearTimeout(typeof syncTimer!=='undefined'?syncTimer:0); }
   const t=today(); const cur=t.slice(0,7); const dmax=+t.slice(8)||1;
   const mk=(ym,n)=>ym+'-'+pad(Math.min(n,ym===cur?dmax:28));
   const base=[ // [day, merchant, cat, channel, pay, amount, card, src]
@@ -1569,7 +1577,7 @@ function loadDemo(){
       S.txs.push({src:src||'card',fcy:cat==='fcy',date:mk(ym,day),merchant:'[DEMO] '+mer,cat,channel:ch||'online',...(ch==='instore'?{pay}:{}),amount:/Netflix|Spotify|Rent|Endowus|Mum/.test(mer)?amt:amount,card:card||null,id:'demo'+(i++)+Date.now().toString(36),ts:Date.now()+i,demo:true}); } }
   if(!held().length) ['citi_rewards','dbs_wwmc','hsbc_revo','uob_ppv','uob_vs','uob_lady_sol','uob_prvi','citi_prestige'].forEach(id=>{const c=cardById(id); if(c) c.held=true;});
   if(!Object.keys(S.settings.budgets).length) S.settings.budgets={dining:300,groceries:250,entertainment:80,shopping:200,transport:120};
-  S.settings.onboarded=true; save(); toast('Demo data loaded - remove it in More → Backup & settings'); viewMonth=cur; setView('home');
+  S.settings.onboarded=true; save(); toast('Demo mode - tap "Exit demo" at the top to go back to your data'); viewMonth=cur; setView('home');
 }
 
 /* ---------- First-run onboarding ---------- */
@@ -1578,7 +1586,7 @@ function renderOb(){ let o=$('#ob'); if(S.settings.onboarded){ if(o) o.remove();
   const N=4; const dots=`<div class="dots">${[0,1,2,3].map(k=>`<i class="${k===obStep?'on':''}"></i>`).join('')}</div>`;
   const nav=(back,next,label)=>`<div class="btnrow">${back?`<button onclick="obStep--;renderOb()">Back</button>`:''}<button class="primary" onclick="${next}">${label||'Next'}</button></div>`;
   let h='';
-  if(obStep===0) h=`<div class="empty"><div class="e">✈️</div><h2>SG Miles Tracker</h2><p>Know which card to use for every purchase, stay inside your 4 mpd caps, and see where your money goes. Everything stays on this phone.</p></div>${nav(false,'obStep=1;renderOb()','Get started')}<button class="link" style="width:100%" onclick="finishOb(true)">Skip and look at demo data</button>`;
+  if(obStep===0) h=`<div class="empty"><div class="e">✈️</div><h2>SG Miles Tracker</h2><p>${_obSnap?'Demo data opens in a separate sandbox - your real data is kept and you can exit any time. ':''}Know which card to use for every purchase, stay inside your 4 mpd caps, and see where your money goes. Everything stays on this phone.</p></div>${nav(false,'obStep=1;renderOb()','Get started')}<button class="link" style="width:100%" onclick="finishOb(true)">Skip and look at demo data</button>`;
   if(obStep===1) h=`<h2>Which cards do you hold?</h2><div class="sub">Untick any you don't carry. You can change this later in More → Cards.</div><div class="card">${S.cards.map(c=>`<label class="tog"><input type="checkbox" ${c.held?'checked':''} onchange="cardById('${c.id}').held=this.checked;save()"> ${esc(c.name)}</label>`).join('')}</div>${nav(true,'obStep=2;renderOb()')}`;
   if(obStep===2){ const st=held().filter(c=>c.cycle==='statement'&&c.id!=='amaze_citi');
     h=`<h2>Statement dates</h2><div class="sub">These cards reset their bonus caps on your statement date, not on the 1st. Check the date on your last statement (or the bank app).</div>
@@ -1586,12 +1594,20 @@ function renderOb(){ let o=$('#ob'); if(S.settings.onboarded){ if(o) o.remove();
     <div class="card"><div class="sub">Optional: annual fee months (for waiver reminders)</div>${held().filter(c=>c.id!=='amaze_citi'&&c.id!=='hsbc_revo').map(c=>`<div class="kv"><span>${esc(short(c.name))}</span><select style="width:110px" onchange="cardById('${c.id}').feeMonth=+this.value||undefined;save()"><option value="">–</option>${MONTHS.map((m,k)=>`<option value="${k+1}" ${+c.feeMonth===k+1?'selected':''}>${m}</option>`).join('')}</select></div>`).join('')}</div>${nav(true,'obStep=3;renderOb()')}`; }
   if(obStep===3) h=`<h2>Monthly budgets</h2><div class="sub">Optional. Leave blank for none - you can set them later in Spend.</div><div class="card"><button class="link" onclick="applyDefaultBudgets(true);renderOb()">✨ Fill with suggested amounts (single adult, moderate)</button>${['rental','dining','groceries','shopping','transport','subscriptions','entertainment','personalcare','travel','others'].map(c=>`<label class="kv"><span>${catIcon(c)} ${esc(catName(c))}</span><input class="bud" type="number" inputmode="decimal" min="0" step="10" placeholder="–" value="${S.settings.budgets[c]||''}" onchange="setBudgetQuiet('${c}',this.value)"></label>`).join('')}</div>
     <h2 style="margin-top:18px">You're set 🎉</h2><div class="btnrow"><button onclick="obStep=2;renderOb()">Back</button><button class="primary" onclick="finishOb(false)">Start tracking</button></div><button class="link" style="width:100%" onclick="finishOb(true)">Start with demo data instead</button>`;
-  o.innerHTML=`<div class="inner">${dots}${h}</div>`; }
+  o.innerHTML=`<div class="inner">${_obSnap?`<button class="link" style="float:right" onclick="cancelOb()">✕ Cancel - back to app</button>`:''}${dots}${h}</div>`; }
 function setStmt(id,v){ const c=cardById(id); const n=Math.max(1,Math.min(28,+v||1)); c.stmtDay=n; c.stmtSet=!!(+v); save(); }
 function setBudgetQuiet(c,v){ v=+v; if(v>0) S.settings.budgets[c]=v; else delete S.settings.budgets[c]; save(); }
-function finishOb(demo){ S.settings.onboarded=true; save(); renderOb(); if(demo) loadDemo(); else { setView('home'); } }
+function confirmRerun(){ let o=$('#ob'); if(!o){ o=document.createElement('div'); o.id='ob'; o.className='ob'; document.body.appendChild(o); }
+  o.innerHTML=`<div class="inner"><h2>Run setup again?</h2><div class="sub">You can review your cards, statement dates and budgets. Your transactions are not touched, and you can cancel at any step without changing anything.</div>
+   <div class="btnrow" style="margin-top:16px"><button onclick="cancelRerun()">‹ Back / Cancel</button><button class="primary" onclick="startRerun()">Continue to setup</button></div></div>`; }
+let _obSnap=null;
+function cancelRerun(){ const o=$('#ob'); if(o) o.remove(); }
+function startRerun(){ _obSnap=clone({cards:S.cards,budgets:S.settings.budgets}); obStep=0; S.settings.onboarded=false; saveNoStamp(); render(); }
+function cancelOb(){ if(_obSnap){ S.cards=_obSnap.cards; S.settings.budgets=_obSnap.budgets; } _obSnap=null; S.settings.onboarded=true; save(); const o=$('#ob'); if(o) o.remove(); setView('home'); toast('Setup cancelled - nothing changed'); }
+function exitDemo(){ localStorage.removeItem(DEMO_KEY); S=load(); _prevSaved=clone(S); viewMonth=today().slice(0,7); setView('home'); toast('Back to your data'); if(typeof syncOnOpen==='function') syncOnOpen(); }
+function finishOb(demo){ _obSnap=null; S.settings.onboarded=true; save(); renderOb(); if(demo) loadDemo(); else { setView('home'); } }
 
-document.addEventListener('DOMContentLoaded',()=>{ applyTheme(); _prevSaved=JSON.parse(localStorage.getItem(LS_KEY)||'null'); if(_prevSaved&&_prevSaved.version!==S.version) _prevSaved=JSON.parse(JSON.stringify(S)); const nAdded=applyRecurring(S,today()); save(); setTimeout(syncOnOpen,50);
+document.addEventListener('DOMContentLoaded',()=>{ applyTheme(); _prevSaved=JSON.parse(localStorage.getItem(LS_KEY)||'null'); if(_prevSaved&&_prevSaved.version!==S.version) _prevSaved=JSON.parse(JSON.stringify(S)); if(!inDemo()&&S.txs.some(t=>t.demo)) S.txs=S.txs.filter(t=>!t.demo); const nAdded=applyRecurring(S,today()); save(); setTimeout(syncOnOpen,50);
   if(nAdded) setTimeout(()=>toast(`🔁 Added ${nAdded} repeating entr${nAdded>1?'ies':'y'} for this month`),300);
   view=S.txs.length||held().length?'home':'home'; setView(view); });
 
@@ -1701,11 +1717,11 @@ function setSyncCfg(p){ const c={...syncCfg(),...p}; localStorage.setItem(SYNC_K
 let syncBusy=false, syncAgain=false, syncTimer=null, lastPullAt=0;
 function fmtTime(ms){ if(!ms) return 'never'; const d=new Date(ms); return d.toLocaleString('en-SG',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false})+' SGT'; }
 function syncSummaryLine(){ const c=syncCfg(); if(!c.token) return 'Off · share data with your laptop / assistant via a private GitHub repo'; return c.error?'⚠️ '+c.error.slice(0,70):`On · last synced ${fmtTime(c.lastSync)}${c.dirty?' · changes waiting':''}`; }
-function syncAfterSave(){ const c=syncCfg(); if(!c.token) return; if(!c.dirty) setSyncCfg({dirty:true}); clearTimeout(syncTimer); syncTimer=setTimeout(()=>syncNow({quiet:true}),4000); }
-function syncOnOpen(){ const c=syncCfg(); if(c.token) syncNow({quiet:true}); }
+function syncAfterSave(){ if(typeof inDemo==='function'&&inDemo()) return; const c=syncCfg(); if(!c.token) return; if(!c.dirty) setSyncCfg({dirty:true}); clearTimeout(syncTimer); syncTimer=setTimeout(()=>syncNow({quiet:true}),4000); }
+function syncOnOpen(){ if(typeof inDemo==='function'&&inDemo()) return; const c=syncCfg(); if(c.token) syncNow({quiet:true}); }
 window.addEventListener&&window.addEventListener('online',()=>{ const c=syncCfg(); if(c.token&&c.dirty) syncNow({quiet:true}); });
 document.addEventListener&&document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&syncCfg().token&&Date.now()-lastPullAt>60000) syncNow({quiet:true}); });
-async function syncNow(opts){ opts=opts||{}; const c=syncCfg();
+async function syncNow(opts){ if(typeof inDemo==='function'&&inDemo()){ if(opts&&!opts.quiet) toast('Sync is paused in demo mode'); return; } opts=opts||{}; const c=syncCfg();
   if(!c.token){ if(!opts.quiet) toast('Paste your token first'); return; }
   if(syncBusy){ syncAgain=true; return; }
   if(typeof navigator!=='undefined'&&navigator.onLine===false){ setSyncCfg({dirty:true,status:'offline'}); if(view==='sync') render(); if(!opts.quiet) toast('Offline - will sync when back online'); return; }
