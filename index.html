@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en-SG" data-theme="auto"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b3d91"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Miles">
-<link rel="apple-touch-icon" href="apple-touch-icon.png"><title>SG Miles Tracker</title>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Spendy">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><title>Spendy</title>
 <script>try{var s=JSON.parse(localStorage.getItem('sgMilesTracker.v2')||'{}');if(s&&s.settings&&s.settings.theme)document.documentElement.dataset.theme=s.settings.theme;}catch(e){}</script>
 <style>:root{--bg:#f2f4f7;--surface:#fff;--surface2:#f7f8fa;--text:#16202f;--muted:#566173;--line:#e3e7ee;--line2:#cfd5df;
 --pri:#0b3d91;--pri-ink:#fff;--pri-soft:#e8efff;--pri-text:#0b3d91;--ok:#067647;--ok-bg:#ecfdf3;--ok-bar:#12b76a;--warn:#93370d;--warn-bg:#fffaeb;--warn-bar:#f5a524;
@@ -116,7 +116,7 @@ code{font-size:13px;background:var(--surface2);padding:1px 4px;border-radius:5px
 
 .demobar{background:#fff4d6;color:#5a4300;border:1px solid #f0c64a;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:14px}.demobar button{display:block;width:100%;margin-top:8px;font-weight:600}
 </style></head><body>
-<header><h1>✈️ SG Miles</h1><button class="hbtn" onclick="setView('guide')" aria-label="How to use">? Help</button></header>
+<header><h1>✈️ Spendy</h1><button class="hbtn" onclick="setView('guide')" aria-label="How to use">? Help</button></header>
 <main id="main"></main><div id="toast" role="status" aria-live="polite"></div>
 <nav><button data-v="home" onclick="setView('home')"><b>🏠</b>Home</button><button data-v="spend" onclick="setView('spend')"><b>📊</b>Spend</button><button data-v="add" class="addbtn" onclick="newTx()"><b>＋</b>Add</button><button data-v="miles" onclick="setView('miles')"><b>✈️</b>Miles</button><button data-v="more" onclick="setView('more')"><b>☰</b>More</button></nav>
 <script>/* ===== Miles engine (pure logic, no DOM) ===== */
@@ -575,12 +575,13 @@ function applyRecurring(state,todayYmd){
 
 /* ===== Expense summary across all payment sources ===== */
 function srcKey(t){ return isCardTx(t)?'card:'+(t.card||'?'):t.src; }
+const FIXED_CATS=['rental','rent','insurance','tax','loan','savings']; // big fixed spend, left out of 'Variable spending' and Top merchants
 function monthTotals(state,ym){
   const ex=new Set(state.settings&&state.settings.excludeCats||[]);
-  const o={total:0,gross:0,reimbursed:0,excluded:0,byCat:{},grossByCat:{},reimbByCat:{},bySrc:{},count:0,reimbCount:0,excludedByCat:{}};
+  const o={variable:0,total:0,gross:0,reimbursed:0,excluded:0,byCat:{},grossByCat:{},reimbByCat:{},bySrc:{},count:0,reimbCount:0,excludedByCat:{}};
   for(const t of state.txs){ if(t.date.slice(0,7)!==ym) continue; const r=isReimb(t), a=(+t.amount||0)*(r?-1:1);
     if(ex.has(t.cat)){ o.excluded+=a; o.excludedByCat[t.cat]=(o.excludedByCat[t.cat]||0)+a; continue; }
-    o.total+=a; o.byCat[t.cat]=(o.byCat[t.cat]||0)+a;
+    o.total+=a; o.byCat[t.cat]=(o.byCat[t.cat]||0)+a; if(!FIXED_CATS.includes(t.cat)) o.variable+=a;
     if(r){ o.reimbursed-=a; o.reimbCount++; o.reimbByCat[t.cat]=(o.reimbByCat[t.cat]||0)-a; continue; } // net totals; payment-source split shows spending only
     o.gross+=a; o.grossByCat[t.cat]=(o.grossByCat[t.cat]||0)+a; o.count++; const k=srcKey(t); o.bySrc[k]=(o.bySrc[k]||0)+a; }
   return o;
@@ -595,7 +596,7 @@ function expenseSummary(state,ym){
     .sort((x,y)=>y.amount-x.amount||y.budget-x.budget);
   const trend=[]; for(let k=5;k>=0;k--){ const m=ymAdd(ym,-k); trend.push({ym:m,total:monthTotals(state,m).total}); }
   // miles only over card spend
-  return {ym,total:cur.total,gross:cur.gross,reimbursed:cur.reimbursed,reimbCount:cur.reimbCount,prevTotal:prev.total,excluded:cur.excluded,excludedByCat:cur.excludedByCat,count:cur.count,rows,bySrc:cur.bySrc,trend};
+  return {variable:cur.variable,prevVariable:prev.variable,ym,total:cur.total,gross:cur.gross,reimbursed:cur.reimbursed,reimbCount:cur.reimbCount,prevTotal:prev.total,excluded:cur.excluded,excludedByCat:cur.excludedByCat,count:cur.count,rows,bySrc:cur.bySrc,trend};
 }
 /* card-only stats for a month (effective mpd & missed ignore non-card spend) */
 function cardMonthStats(state,ym,L){
@@ -604,7 +605,7 @@ function cardMonthStats(state,ym,L){
   return {spend,miles,missed,mpd:spend?miles/spend:0};
 }
 
-if(typeof module!=='undefined'&&module.exports) module.exports={isReimb,FEE_INFO,FEES_CHECKED,CAP_RULES,VIA_RULES,VIA_GLOBAL,VIA_NAMES,viaRule,isClearSubscription,CHECKED,CAT,SRC,NOBONUS_CATS,parseD,ymd,pad,fmt,SOURCES,isCardTx,migrateState,applyRecurring,expenseSummary,cardMonthStats,monthTotals,ymAdd,setKfMode,CATS,DEFAULT_CARDS,cycleStart,cycleEnd,allocate,evalLedger,recommend,poolStatus,cheatSheet,cardMinStatus,ruleMatches};
+if(typeof module!=='undefined'&&module.exports) module.exports={FIXED_CATS,isReimb,FEE_INFO,FEES_CHECKED,CAP_RULES,VIA_RULES,VIA_GLOBAL,VIA_NAMES,viaRule,isClearSubscription,CHECKED,CAT,SRC,NOBONUS_CATS,parseD,ymd,pad,fmt,SOURCES,isCardTx,migrateState,applyRecurring,expenseSummary,cardMonthStats,monthTotals,ymAdd,setKfMode,CATS,DEFAULT_CARDS,cycleStart,cycleEnd,allocate,evalLedger,recommend,poolStatus,cheatSheet,cardMinStatus,ruleMatches};
 
 /* ===== Editable content: card playbook + "Save more" rebate apps (dated, sourced) =====
    Everything here is plain data. Users can override it in More → Save more → "Edit content".
@@ -783,7 +784,7 @@ function insights(state,ym,todayStr){
   const catTrend=E.rows.map(r=>{ const avg3=(hist.reduce((a,h)=>a+(h[r.cat]||0),0))/3; const months=hist.filter(h=>h[r.cat]).length;
     return {...r,avg3,months,vsAvg:avg3?(r.amount-avg3)/avg3:null}; });
   // top merchants
-  const mm={}; for(const t of state.txs){ if(t.date.slice(0,7)!==ym||ex.has(t.cat)||isReimb(t)) continue; const k=merchantKey(t)||((CAT[t.cat]||{}).name||t.cat); const o=mm[k.toLowerCase()]=mm[k.toLowerCase()]||{name:k,amount:0,count:0,cat:t.cat}; o.amount+=+t.amount; o.count++; }
+  const mm={}; for(const t of state.txs){ if(t.date.slice(0,7)!==ym||ex.has(t.cat)||FIXED_CATS.includes(t.cat)||isReimb(t)) continue; const k=merchantKey(t)||((CAT[t.cat]||{}).name||t.cat); const o=mm[k.toLowerCase()]=mm[k.toLowerCase()]||{name:k,amount:0,count:0,cat:t.cat}; o.amount+=+t.amount; o.count++; }
   const merchants=Object.values(mm).sort((a,b)=>b.amount-a.amount).slice(0,5);
   const opp=[];
   // 1. budgets: over, or on pace to go over
@@ -1146,7 +1147,7 @@ function viewHome(){
   const bpct=s.budgetTotal?s.budgetUsed/s.budgetTotal:null;
   const recent=[...S.txs].sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0)).slice(0,4); const L=evalLedger(S);
   const ops=I.opportunities.slice(0,3);
-  return `<div class="card hero"><div class="sub">${MONTHS[m-1]} ${y} · spent so far</div><div class="herotot"><div class="big">${money(s.total)}</div><div class="exrent"><small>Excl. rent</small><b>${money(exclRent(ym,s.total))}</b></div></div>
+  return `<div class="card hero"><div class="sub">${MONTHS[m-1]} ${y} · spent so far</div><div class="herotot"><div class="big">${money(s.total)}</div><div class="exrent"><small>Variable</small><b>${money(exclRent(ym,s.total))}</b></div></div>
      ${s.reimbursed>0?`<div class="sub">after ${money(s.reimbursed)} paid back</div>`:''}<div class="sub">${s.prev?MONTHS[(m+10)%12]+' total '+money0(s.prev):'No data for last month'}${s.isCurrent&&s.projected>s.total+1?' · on pace for '+money0(s.projected):''}</div>
      <div class="hg"><div><small>Miles</small><b>${n0(s.miles)}</b></div><div><small>Avg mpd</small><b>${s.cardSpend?s.mpd.toFixed(2):'–'}</b></div><div><small>Missed</small><b>${n0(s.missed)}</b></div></div>
      ${bpct!==null?`<div class="sub" style="margin-top:10px">Budgets: ${money0(s.budgetUsed)} of ${money0(s.budgetTotal)} (${Math.round(bpct*100)}%)</div><div class="bar"><i style="width:${Math.min(100,bpct*100).toFixed(0)}%"></i></div>`:`<div class="sub" style="margin-top:10px"><button class="link" style="color:#fff;padding:0" onclick="editBudgets=true;goSpendMonth()">Set monthly budgets →</button></div>`}</div>
@@ -1287,7 +1288,7 @@ function viewSpend(){ if(spendMode==='year') return spendToggle()+viewYear();
   const txs=S.txs.filter(t=>t.date.slice(0,7)===viewMonth).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:(b.ts||0)-(a.ts||0));
   const maxM=Math.max(1,...I.merchants.map(x=>x.amount));
   const ins=`${I.opportunities.length?`<div class="card"><div class="h3">💡 What can be optimised</div>${I.opportunities.map(oppHtml).join('')}</div>`:''}
-   ${I.merchants.length?`<div class="card"><div class="h3">Top merchants</div>${I.merchants.map(x=>`<div class="erow"><div class="ehead"><span>${catIcon(x.cat)} ${esc(x.name)} <small>×${x.count}</small></span><b>${money(x.amount)}</b></div><div class="bar thin"><i class="blue" style="width:${(x.amount/maxM*100).toFixed(0)}%"></i></div></div>`).join('')}<div class="sub">Merchant name as typed when adding. Entries without a merchant are grouped by category.</div></div>`:''}
+   ${I.merchants.length?`<div class="card"><div class="h3">Top merchants</div>${I.merchants.map(x=>`<div class="erow"><div class="ehead"><span>${catIcon(x.cat)} ${esc(x.name)} <small>×${x.count}</small></span><b>${money(x.amount)}</b></div><div class="bar thin"><i class="blue" style="width:${(x.amount/maxM*100).toFixed(0)}%"></i></div></div>`).join('')}<div class="sub">Merchant name as typed when adding. Entries without a merchant are grouped by category. Rent, insurance, tax, loan and savings are left out.</div></div>`:''}
    ${I.catTrend.some(r=>r.avg3>0)?`<div class="card"><div class="h3">Category trend <small>vs your 3-month average</small></div>${I.catTrend.filter(r=>r.amount||r.avg3).map(r=>`<div class="kv"><span>${catIcon(r.cat)} ${esc(catName(r.cat))}</span><span>${money0(r.amount)} <small class="sub">avg ${money0(r.avg3)}</small> ${r.vsAvg===null?'':`<b class="${r.vsAvg>0.15?'up':r.vsAvg<-0.15?'down':''}">${r.vsAvg>0?'▲':'▼'}${Math.abs(r.vsAvg*100).toFixed(0)}%</b>`}</span></div>`).join('')}</div>`:''}`;
   return spendToggle()+viewExpenses(ins)+`<div class="card"><div class="h3">Transactions (${txs.length})</div>${txs.length?txs.map(t=>txRow(t,L)).join(''):`<div class="empty"><div class="e">🧾</div><p>Nothing logged for this month.</p><button class="primary" onclick="newTx()">➕ Add expense</button></div>`}</div>`;
 }
@@ -1523,6 +1524,7 @@ function viewExpenses(ins){
   <div class="stats">
     <div><small>Total spend${E.reimbursed?' (net)':''}</small><b>${money(E.total)}</b>${E.reimbursed?`<small class="sub">${money(E.gross)} spent − <span class="plus">${money(E.reimbursed)} paid back</span></small>`:''}</div>
     <div><small>vs ${MONTHS[(m+10)%12]}</small><b class="${diffPct===null?'':diffPct>0?'red':'green'}">${diffPct===null?'–':(diffPct>0?'▲ ':'▼ ')+Math.abs(diffPct*100).toFixed(0)+'%'}</b></div>
+    <div><small>Variable spending</small><b>${money(E.variable)}</b><small class="sub">${E.prevVariable?`vs ${MONTHS[(m+10)%12]} ${money(E.prevVariable)} `+((E.variable-E.prevVariable)>0?`<span class="up">▲ ${Math.abs((E.variable-E.prevVariable)/E.prevVariable*100).toFixed(0)}%</span>`:`<span class="down">▼ ${Math.abs((E.variable-E.prevVariable)/E.prevVariable*100).toFixed(0)}%</span>`):'excl. rent, insurance, tax, loan, savings'}</small></div>
     <div><small>Entries</small><b>${E.count}</b></div>
     <div><small>Excluded transfers</small><b>${money(E.excluded)}</b></div>
   </div>
@@ -1586,7 +1588,7 @@ function renderOb(){ let o=$('#ob'); if(S.settings.onboarded){ if(o) o.remove();
   const N=4; const dots=`<div class="dots">${[0,1,2,3].map(k=>`<i class="${k===obStep?'on':''}"></i>`).join('')}</div>`;
   const nav=(back,next,label)=>`<div class="btnrow">${back?`<button onclick="obStep--;renderOb()">Back</button>`:''}<button class="primary" onclick="${next}">${label||'Next'}</button></div>`;
   let h='';
-  if(obStep===0) h=`<div class="empty"><div class="e">✈️</div><h2>SG Miles Tracker</h2><p>${_obSnap?'Demo data opens in a separate sandbox - your real data is kept and you can exit any time. ':''}Know which card to use for every purchase, stay inside your 4 mpd caps, and see where your money goes. Everything stays on this phone.</p></div>${nav(false,'obStep=1;renderOb()','Get started')}<button class="link" style="width:100%" onclick="finishOb(true)">Skip and look at demo data</button>`;
+  if(obStep===0) h=`<div class="empty"><div class="e">✈️</div><h2>Spendy</h2><p>${_obSnap?'Demo data opens in a separate sandbox - your real data is kept and you can exit any time. ':''}Know which card to use for every purchase, stay inside your 4 mpd caps, and see where your money goes. Everything stays on this phone.</p></div>${nav(false,'obStep=1;renderOb()','Get started')}<button class="link" style="width:100%" onclick="finishOb(true)">Skip and look at demo data</button>`;
   if(obStep===1) h=`<h2>Which cards do you hold?</h2><div class="sub">Untick any you don't carry. You can change this later in More → Cards.</div><div class="card">${S.cards.map(c=>`<label class="tog"><input type="checkbox" ${c.held?'checked':''} onchange="cardById('${c.id}').held=this.checked;save()"> ${esc(c.name)}</label>`).join('')}</div>${nav(true,'obStep=2;renderOb()')}`;
   if(obStep===2){ const st=held().filter(c=>c.cycle==='statement'&&c.id!=='amaze_citi');
     h=`<h2>Statement dates</h2><div class="sub">These cards reset their bonus caps on your statement date, not on the 1st. Check the date on your last statement (or the bank app).</div>
@@ -1619,15 +1621,15 @@ const kfmt=v=>v>=1000?(v/1000).toFixed(v>=10000?0:1)+'k':String(Math.round(v));
 const PALETTE=['#2e6be6','#12b76a','#f5a524','#e04f8a','#7a5af8','#98a2b3'];
 
 /* total for a month without the Rental category (if Rental is already excluded from totals, it's the same figure) */
-function exclRent(ym,total){ const t=monthTotals(S,ym); return (total!==undefined?total:t.total)-((t.byCat.rental||0)+(t.byCat.rent||0)); }
+function exclRent(ym,total){ return monthTotals(S,ym).variable; } // now = variable spending (excl. FIXED_CATS)
 /* ---------- 1-year overview ---------- */
-function yearData(endYm){
+function yearData(endYm){ /* variable = excl. FIXED_CATS */
   const months=[]; for(let k=11;k>=0;k--) months.push(ymAdd(endYm,-k));
   const L=evalLedger(S);
-  const per=months.map(ym=>{ const t=monthTotals(S,ym); const cs=cardMonthStats(S,ym,L); return {ym,total:t.total,reimbursed:t.reimbursed,byCat:t.byCat,miles:cs.miles,cardSpend:cs.spend,count:t.count}; });
+  const per=months.map(ym=>{ const t=monthTotals(S,ym); const cs=cardMonthStats(S,ym,L); return {ym,variable:t.variable,total:t.total,reimbursed:t.reimbursed,byCat:t.byCat,miles:cs.miles,cardSpend:cs.spend,count:t.count}; });
   const catTot={}; for(const p of per) for(const [c,v] of Object.entries(p.byCat)) catTot[c]=(catTot[c]||0)+v;
   const active=per.filter(p=>p.count>0).length;
-  return {months,per,catTot,active,reimbursed:per.reduce((s,p)=>s+p.reimbursed,0),total:per.reduce((s,p)=>s+p.total,0),miles:per.reduce((s,p)=>s+p.miles,0),cardSpend:per.reduce((s,p)=>s+p.cardSpend,0)};
+  return {months,per,catTot,active,variable:per.reduce((s,p)=>s+p.variable,0),reimbursed:per.reduce((s,p)=>s+p.reimbursed,0),total:per.reduce((s,p)=>s+p.total,0),miles:per.reduce((s,p)=>s+p.miles,0),cardSpend:per.reduce((s,p)=>s+p.cardSpend,0)};
 }
 function viewYear(){
   const endYm=today().slice(0,7); const Y=yearData(endYm);
@@ -1644,8 +1646,8 @@ function viewYear(){
   const last3=c=>[1,2,3].map(k=>{const p=Y.per[11-k]; return p?p.byCat[c]||0:0;}).reduce((a,b)=>a+b,0)/3;
   const noData=!Y.total; const yRent=(Y.catTot.rental||0)+(Y.catTot.rent||0);
   return `<div class="stats">
-    <div><small>12-month spend</small><b>${money0(Y.total)}</b><small class="sub">Excl. rent ${money0(Y.total-yRent)}${Y.reimbursed?` · net of <span class="plus">${money0(Y.reimbursed)} paid back</span>`:''}</small></div>
-    <div><small>Monthly average</small><b>${money0(Y.total/div)}</b><small class="sub">Excl. rent ${money0((Y.total-yRent)/div)} · ${Y.active} month${Y.active===1?'':'s'} with data</small></div>
+    <div><small>12-month spend</small><b>${money0(Y.total)}</b><small class="sub">Variable ${money0(Y.variable)}${Y.reimbursed?` · net of <span class="plus">${money0(Y.reimbursed)} paid back</span>`:''}</small></div>
+    <div><small>Monthly average</small><b>${money0(Y.total/div)}</b><small class="sub">Variable ${money0(Y.variable/div)} · ${Y.active} month${Y.active===1?'':'s'} with data</small></div>
     <div><small>Miles (12 months)</small><b>${n0(Y.miles)}</b></div>
     <div><small>Avg mpd on cards</small><b>${Y.cardSpend?(Y.miles/Y.cardSpend).toFixed(2):'–'}</b></div></div>
   <div class="card"><div class="h3">Monthly spend <small>${MONTHS[+Y.months[0].slice(5)-1]} ${Y.months[0].slice(0,4)} – ${MONTHS[+endYm.slice(5)-1]} ${endYm.slice(0,4)} · tap a month</small></div>
