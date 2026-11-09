@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#0b3d91"/>
+  <!-- custom geometric S: consistent stroke, open terminals, ~55% height -->
+  <path d="M 322 192
+           C 322 158, 294 140, 256 140
+           C 208 140, 176 168, 176 206
+           C 176 240, 202 258, 256 276
+           C 310 294, 336 312, 336 348
+           C 336 386, 304 412, 256 412
+           C 208 412, 176 386, 176 352"
+        fill="none" stroke="#ffffff" stroke-width="42" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
