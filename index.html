@@ -1402,9 +1402,11 @@ function viewMonthHtml(){
      let msg=''; if(p.pct>=0.75){ const st=switchTarget(p)||[]; const sw=st.map(x=>`<b>${esc(short(x.alt.card.name))}</b> for ${esc(x.label)} (${(x.alt.miles/100).toFixed(1)} mpd)`).join('; ');
        msg = p.pct>=1? `<div class="capmsg red">⛔ Cap reached${sw?', switch to '+sw:''}.</div>` : `<div class="capmsg amber">⚠️ Only ${money(p.remaining)} left${sw?'. Next: '+sw:''}.</div>`; }
      const minLine = p.min? `<div class="sub">Min spend: ${money(p.minSpent)} / ${money(p.min)} ${p.minSpent>=p.min?'✅':'⏳ bonus pending'}</div>`:'';
-     return `<div class="cap"><div class="caphead"><span>${esc(short(p.card.name))} · ${esc(p.name)}</span><span>${money(p.used).replace('.00','')} / ${money(p.cap).replace('.00','')}</span></div>
+     const stt=p.min&&p.minSpent<p.min?'⏳ min spend not met':p.pct>=1?'⛔ Capped out':p.pct>=0.75?'⚠️ Nearly capped':'✅ Open';
+     return `<div class="cap"><div class="caphead"><span>${esc(short(p.card.name))}${p.card.last4?' ••'+esc(p.card.last4):''} · ${esc(p.name)}</span><span>${money(p.used).replace('.00','')} / ${money(p.cap).replace('.00','')}</span></div>
      <div class="bar"><i class="${cls}" style="width:${(pct*100).toFixed(1)}%"></i></div>
-     <div class="sub">${money(p.remaining)} left · ${p.card.cycle==='statement'?'statement':'calendar'} cycle ${esc(p.cycleStart)} → ${esc(p.cycleEnd)}</div>${minLine}${msg}</div>`;}).join(''):'<div class="sub">No capped cards ticked.</div>'}
+     <div class="sub"><b>${stt}</b> · ${money(p.remaining)} left · ${p.card.cycle==='statement'?'statement':'calendar'} cycle ${esc(p.cycleStart)} → ${esc(p.cycleEnd)}</div>${minLine}${msg}</div>`;}).join(''):'<div class="sub">No capped cards ticked.</div>'}
+  ${S.cards.filter(c=>c.held&&!Object.keys(c.pools||{}).length).map(c=>`<div class="cap"><div class="caphead"><span>${esc(short(c.name))}${c.last4?' ••'+esc(c.last4):''}</span><span>No cap</span></div><div class="sub"><b>✅ Uncapped</b> · ${c.baseLocal} mpd local / ${c.baseFcy} mpd FCY</div></div>`).join('')}
   ${mins.map(x=>`<div class="cap"><div class="caphead"><span>${esc(short(x.card.name))} · minimum spend</span><span>${money(x.spent)} / ${money(x.min)}</span></div><div class="bar"><i class="${x.spent>=x.min?'green':'amber'}" style="width:${Math.min(100,x.spent/x.min*100).toFixed(1)}%"></i></div>${x.spent<x.min?`<div class="sub">${money(x.min-x.spent)} more needed this cycle to unlock bonus miles.</div>`:''}</div>`).join('')}
   </div>
   ${Object.keys(byCard).length?`<div class="card"><div class="h3">By card</div>${Object.entries(byCard).sort((a,b)=>b[1].m-a[1].m).map(([id,v])=>`<div class="kv"><span>${esc(short((cardById(id)||{name:id}).name))}</span><span>${money(v.s)} · <b>${n0(v.m)} mi</b></span></div>`).join('')}
@@ -1427,7 +1429,7 @@ function viewBest(){
 function viewCards(){
   return backBar('Cards')+`<div class="card"><div class="h3">Your cards</div><div class="sub">Tick the cards you hold. Tap a card to see/edit its rules. Data checked ${CHECKED} (MileLion, bank pages, Mainly Miles, SuiteSmile, YouTrip, Truffle). Items marked <span class="vf">verify</span> could not be confirmed.</div></div>
   ${S.cards.map(c=>`<div class="card ccard">
-    <div class="row"><label class="tog grow" style="margin:0"><input type="checkbox" ${c.held?'checked':''} onchange="toggleHeld('${c.id}',this.checked)"> <b>${esc(c.name)}</b></label>
+    <div class="row"><label class="tog grow" style="margin:0"><input type="checkbox" ${c.held?'checked':''} onchange="toggleHeld('${c.id}',this.checked)"> <b>${esc(c.name)}</b>${c.last4?` <span class="sub">••${esc(c.last4)}</span>`:''}</label>
     <button class="link" onclick="openCard=openCard==='${c.id}'?null:'${c.id}';render()">${openCard===c.id?'Close':'Details'}</button></div>
     <div class="sub">${c.rules.length?c.rules.map(r=>`${r.mpd} mpd ${esc(r.label)}`).join(' · '):'General spend card'} · base ${c.baseLocal} local / ${c.baseFcy} FCY${Object.values(c.pools).length?' · caps '+Object.values(c.pools).map(p=>money(p.cap).replace('.00','')).join(' + ')+' per '+(c.cycle==='statement'?'statement':'calendar')+' month':''}${c.min?' · min S$'+c.min:''}${(c.info.verify||[]).length?' · <span class="vf">verify</span>':''}${FEE_INFO[c.id]?`<div class="sub">💰 ${esc(FEE_INFO[c.id].fee)} · caps reset ${esc(capBasisText(c.id))}</div>`:''}${c.held&&c.cycle==='statement'&&!c.stmtSet&&c.id!=='amaze_citi'?'<div class="warn">📅 Statement date not set - open Details</div>':''}</div>
     ${openCard===c.id?cardEditor(c):''}</div>`).join('')}
@@ -1442,6 +1444,7 @@ function cardEditor(c){
     <label>Earning block S$<input type="number" step="1" min="1" value="${c.block}" onchange="setCardF('${c.id}','block',+this.value||1)"></label>
     <label>Cap cycle<select onchange="setCardF('${c.id}','cycle',this.value)"><option value="calendar" ${c.cycle==='calendar'?'selected':''}>Calendar month</option><option value="statement" ${c.cycle==='statement'?'selected':''}>Statement month</option></select></label>
     ${c.cycle==='statement'?`<label>Statement cycle starts on day<input type="number" min="1" max="28" value="${c.stmtDay}" onchange="setStmt('${c.id}',this.value);render()"></label>`:''}
+    <label>Card ending (last 4)<input type="text" inputmode="numeric" maxlength="4" placeholder="e.g. 7122" value="${esc(c.last4||'')}" onchange="setCardF('${c.id}','last4',(this.value||'').replace(/\D/g,'').slice(-4))"></label>
     <label>Annual fee month<select onchange="setCardF('${c.id}','feeMonth',+this.value||undefined)"><option value="">Not set</option>${MONTHS.map((m,k)=>`<option value="${k+1}" ${+c.feeMonth===k+1?'selected':''}>${m}</option>`).join('')}</select></label>
     ${c.min!==undefined?`<label>Min spend S$/month<input type="number" value="${c.min}" onchange="setCardF('${c.id}','min',+this.value)"></label>`:''}
    </div>
