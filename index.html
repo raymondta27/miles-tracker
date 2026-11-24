@@ -1,11 +1,13 @@
 <!DOCTYPE html><html lang="en-SG" data-theme="auto"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b3d91"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Spendy">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=10">
+<meta name="application-name" content="Spendy">
+<link rel="apple-touch-icon" href="apple-touch-icon-v12.png">
+<link rel="manifest" href="manifest.webmanifest?v=12">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
-<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
-<link rel="icon" href="icon-512.png" sizes="512x512" type="image/png">
+<link rel="icon" href="favicon-32-v12.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icon-192-v12.png" sizes="192x192" type="image/png">
+<link rel="icon" href="icon-512-v12.png" sizes="512x512" type="image/png">
 <title>Spendy</title>
 <script>try{var s=JSON.parse(localStorage.getItem('sgMilesTracker.v2')||'{}');if(s&&s.settings&&s.settings.theme)document.documentElement.dataset.theme=s.settings.theme;}catch(e){}</script>
 <style>:root{--bg:#f2f4f7;--surface:#fff;--surface2:#f7f8fa;--text:#16202f;--muted:#566173;--line:#e3e7ee;--line2:#cfd5df;
@@ -121,7 +123,7 @@ code{font-size:13px;background:var(--surface2);padding:1px 4px;border-radius:5px
 
 .demobar{background:#fff4d6;color:#5a4300;border:1px solid #f0c64a;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:14px}.demobar button{display:block;width:100%;margin-top:8px;font-weight:600}
 </style></head><body>
-<header><h1><img class="brand" src="apple-touch-icon.png?v=10" alt="" width="22" height="22"> Spendy</h1><button class="hbtn" onclick="setView('guide')" aria-label="How to use">? Help</button></header>
+<header><h1><img class="brand" src="apple-touch-icon-v12.png" alt="" width="22" height="22"> Spendy</h1><button class="hbtn" onclick="setView('guide')" aria-label="How to use">? Help</button></header>
 <main id="main"></main><div id="toast" role="status" aria-live="polite"></div>
 <nav><button data-v="home" onclick="setView('home')"><b>🏠</b>Home</button><button data-v="spend" onclick="setView('spend')"><b>📊</b>Spend</button><button data-v="add" class="addbtn" onclick="newTx()"><b>＋</b>Add</button><button data-v="miles" onclick="setView('miles')"><b>✈️</b>Miles</button><button data-v="more" onclick="setView('more')"><b>☰</b>More</button></nav>
 <script>/* ===== Miles engine (pure logic, no DOM) ===== */
@@ -1156,6 +1158,7 @@ function viewHome(){
      ${s.reimbursed>0?`<div class="sub">after ${money(s.reimbursed)} paid back</div>`:''}<div class="sub">${s.prev?MONTHS[(m+10)%12]+' total '+money0(s.prev):'No data for last month'}${s.isCurrent&&s.projected>s.total+1?' · on pace for '+money0(s.projected):''}</div>
      <div class="hg"><div><small>Miles</small><b>${n0(s.miles)}</b></div><div><small>Avg mpd</small><b>${s.cardSpend?s.mpd.toFixed(2):'–'}</b></div><div><small>Missed</small><b>${n0(s.missed)}</b></div></div>
      ${bpct!==null?`<div class="sub" style="margin-top:10px">Budgets: ${money0(s.budgetUsed)} of ${money0(s.budgetTotal)} (${Math.round(bpct*100)}%)</div><div class="bar"><i style="width:${Math.min(100,bpct*100).toFixed(0)}%"></i></div>`:`<div class="sub" style="margin-top:10px"><button class="link" style="color:#fff;padding:0" onclick="editBudgets=true;goSpendMonth()">Set monthly budgets →</button></div>`}</div>
+   ${syncHealthBanner(today())}
    <div class="btnrow" style="margin-top:-2px"><button class="primary" onclick="newTx()">➕ Add expense</button></div>
    ${qaHtml()?`<div class="card"><div class="h3">Quick add <small>your frequent merchants</small></div>${qaHtml()}</div>`:''}
    ${nudgesCard(nudges(S,today()),5)}
@@ -1309,7 +1312,7 @@ function viewMore(){ const it=(v,ic,t,s,fn)=>`<button class="item" onclick="${fn
    ${it('data','💾','Backup & settings','Export / import, theme, demo data, expense settings')}
    ${it('guide','❓','How to use','Install on iPhone, 10-second add, reading the advice')}
    ${it('','🚀','Run setup again','Cards, statement dates, budgets',"confirmRerun()")}</div>
-   <div class="sub" style="text-align:center">Card data checked ${CHECKED} · fees checked ${FEES_CHECKED} · app content checked ${CONTENT_CHECKED}. ${syncCfg().token?'Synced to your private GitHub repo.':'Data stays on this phone unless you turn on Sync.'}</div>`; }
+   <div class="sub" style="text-align:center">Spendy v${APP_VERSION} · Card data checked ${CHECKED} · fees checked ${FEES_CHECKED} · app content checked ${CONTENT_CHECKED}. ${syncCfg().token?'Synced to your private GitHub repo.':'Data stays on this phone unless you turn on Sync.'}</div>`; }
 
 function viewPlaybook(){ const C=content(); const hs=held();
   return backBar('Card playbook')+`<div class="card"><div class="h3">Golden rules</div>${C.tips.map(t=>`<div class="nudge"><span class="ic">⭐</span><div><b>${esc(t.t)}</b><div class="sub">${esc(t.d)}</div></div></div>`).join('')}</div>
@@ -1338,7 +1341,8 @@ function viewSave(){ const C=content(); const cats=Object.keys(C.byCat).filter(c
 function saveContent(){ try{ const o=JSON.parse($('#cjson').value); S.content={...S.content,...o}; save(); toast('Content saved'); render(); }catch(e){ alert('Invalid JSON: '+e.message); } }
 
 function viewGuide(){ return backBar('How to use')+`
- <div class="card"><div class="h3">1. Install on your iPhone</div><ol class="steps"><li>Open the app link in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (square with arrow).</li><li>Choose <b>Add to Home Screen</b> → Add.</li><li>Open it from the home-screen icon. Works offline; data stays on this phone.</li></ol></div>
+ <div class="card"><div class="h3">1. Install on your iPhone</div><ol class="steps"><li>Open the app link in <b>Safari</b> (not Chrome).</li><li>Tap the <b>Share</b> button (square with arrow).</li><li>Choose <b>Add to Home Screen</b> → the name should be <b>Spendy</b> → Add.</li><li>Open it from the home-screen icon. Works offline; data stays on this phone unless you turn on Sync.</li></ol>
+  <div class="sub">If the home-screen icon is still the old Miles Tracker mark, or the name is wrong: delete that shortcut, then add it again from Safari. iPhone caches the icon and does not pick up a new one on refresh alone.</div></div>
  <div class="card"><div class="h3">2. First setup (2 minutes)</div><ol class="steps"><li>Tick the cards you hold.</li><li>Enter statement dates for Citi Rewards and UOB Visa Signature (their caps reset per statement).</li><li>Set budgets for categories you want to watch.</li></ol><button class="link" onclick="obStep=0;S.settings.onboarded=false;render()">Run setup now →</button></div>
  <div class="card"><div class="h3">3. Add an expense in 10 seconds</div><ol class="steps"><li>Tap <b>➕ Add</b> (or a Quick add merchant).</li><li>Type the amount.</li><li>Tap a category (the app remembers your last one and guesses from the merchant).</li><li>Check In-store / Online and how you pay.</li><li>Tap the green-backed <b>Save</b> bar - it shows the best card and miles.</li></ol></div>
  <div class="card"><div class="h3">4. Read the recommendation</div><ol class="steps"><li>🏆 line = the card to use and the miles you'll get.</li><li>Grey cards show why they lose: <i>Cap reached</i>, <i>Min spend not met</i>, <i>Not eligible</i>.</li><li>✂️ Split appears when a purchase straddles a cap.</li><li>Tap another card to log what you actually used.</li></ol></div>
@@ -1367,6 +1371,22 @@ function delTx(id){ const k=S.txs.findIndex(x=>x.id===id); if(k<0) return; const
   save(); render(); toast('Deleted','Undo',()=>{ S.txs.splice(Math.min(k,S.txs.length),0,t); save(); render(); toast('Restored'); }); }
 
 /* ---------- Month ---------- */
+const APP_VERSION='12';
+function latestTxDate(){ let d=''; for(const x of S.txs||[]){ if(x.demo) continue; if((x.date||'')>d) d=x.date; } return d; }
+function fmtDay(s){ if(!s) return 'none'; const d=parseD(s); return d.toLocaleDateString('en-SG',{day:'numeric',month:'short',year:'numeric'}); }
+function daysBetween(a,b){ return Math.round((parseD(b)-parseD(a))/864e5); }
+function syncHealthBanner(refDate){
+  const c=typeof syncCfg==='function'?syncCfg():{};
+  const latest=latestTxDate();
+  const lag=(latest&&refDate)?daysBetween(latest,refDate):0;
+  const stale=lag>=5;
+  const bits=[];
+  if(c.error) bits.push(`<div class="capmsg red">⚠️ Sync failed: ${esc(String(c.error).slice(0,140))}. Open <button class="link" onclick="setView('sync')">More → Sync</button> to fix it — new entries from your assistant will not appear until this phone syncs.</div>`);
+  else if(!c.token) bits.push(`<div class="capmsg amber">☁️ Sync is off on this phone. Entries logged on other devices (or by your assistant) will not show here until you turn on <button class="link" onclick="setView('sync')">Sync</button>.</div>`);
+  else if(stale) bits.push(`<div class="capmsg amber">⚠️ Latest entry on this phone is ${esc(fmtDay(latest))} (${lag} days ago). If you have spent since then, open <button class="link" onclick="setView('sync')">More → Sync</button> and tap Sync now.</div>`);
+  const syncLine=c.token?(c.lastSync?`Last synced ${esc(fmtTime(c.lastSync))}`:'Sync is on, but this phone has not synced yet'):'Sync off';
+  return `${bits.join('')}<div class="sub">Ledger on this phone goes up to ${esc(fmtDay(latest))} · ${syncLine} · Spendy v${APP_VERSION}</div>`;
+}
 function shiftMonth(k){ let [y,m]=viewMonth.split('-').map(Number); m+=k; if(m<1){m=12;y--;} if(m>12){m=1;y++;} viewMonth=y+'-'+pad(m); render(); }
 function refDateForMonth(){ const t=today(); if(t.slice(0,7)===viewMonth) return t; const [y,m]=viewMonth.split('-').map(Number); return ymd(new Date(y,m,0)); }
 function switchTarget(ps){
@@ -1398,6 +1418,7 @@ function viewMonthHtml(){
     <div><small>Miles missed vs best</small><b class="${missed?'amber':''}">${n0(missed)}</b>${missed?'<button class="link" style="padding:0;min-height:0;font-size:13px" onclick="goSpendMonth()">Which purchases?</button>':''}</div>
   </div>
   <div class="card"><div class="h3">Bonus caps <small>(as at ${esc(ref)})</small></div>
+  ${syncHealthBanner(ref)}
   ${pools.length?pools.map(p=>{ const pct=Math.min(1,p.pct); const cls=p.pct>=1?'red':p.pct>=0.75?'amber':'green';
      let msg=''; if(p.pct>=0.75){ const st=switchTarget(p)||[]; const sw=st.map(x=>`<b>${esc(short(x.alt.card.name))}</b> for ${esc(x.label)} (${(x.alt.miles/100).toFixed(1)} mpd)`).join('; ');
        msg = p.pct>=1? `<div class="capmsg red">⛔ Cap reached${sw?', switch to '+sw:''}.</div>` : `<div class="capmsg amber">⚠️ Only ${money(p.remaining)} left${sw?'. Next: '+sw:''}.</div>`; }
@@ -1724,7 +1745,7 @@ function walletsHtml(hs){ const ids=hs.map(c=>c.id).filter(id=>WALLETS[id]);
 const SYNC_KEY='sgMilesTracker.sync'; // device-only: token + repo settings. Never part of exported/synced data.
 function syncCfg(){ let c=null; try{ c=JSON.parse(localStorage.getItem(SYNC_KEY)); }catch(e){} return {owner:'raymondta27',repo:'miles-tracker-data',path:'data.json',branch:'main',token:'',api:'',...(c||{})}; }
 function setSyncCfg(p){ const c={...syncCfg(),...p}; localStorage.setItem(SYNC_KEY,JSON.stringify(c)); return c; }
-let syncBusy=false, syncAgain=false, syncTimer=null, lastPullAt=0;
+let syncBusy=false, syncAgain=false, syncTimer=null, lastPullAt=0, lastSyncErrToast="";
 function fmtTime(ms){ if(!ms) return 'never'; const d=new Date(ms); return d.toLocaleString('en-SG',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false})+' SGT'; }
 function syncSummaryLine(){ const c=syncCfg(); if(!c.token) return 'Off · share data with your laptop / assistant via a private GitHub repo'; return c.error?'⚠️ '+c.error.slice(0,70):`On · last synced ${fmtTime(c.lastSync)}${c.dirty?' · changes waiting':''}`; }
 function syncAfterSave(){ if(typeof inDemo==='function'&&inDemo()) return; const c=syncCfg(); if(!c.token) return; if(!c.dirty) setSyncCfg({dirty:true}); clearTimeout(syncTimer); syncTimer=setTimeout(()=>syncNow({quiet:true}),4000); }
@@ -1748,8 +1769,11 @@ async function syncNow(opts){ if(typeof inDemo==='function'&&inDemo()){ if(opts&
     const d=S.txs.length-before;
     if(!opts.quiet||opts.upload) toast(opts.upload?`Uploaded - cloud now has ${S.txs.length} entries`:r.pushed?(d>0?`Synced · ${d} new from cloud`:'Synced ✓'):(d?`Synced · ${d>0?'+':''}${d} entries`:'Already up to date'));
     else if(d>0) toast(`☁️ ${d} new entr${d>1?'ies':'y'} from sync`);
-    if(changedLocal&&view!=='add') render(); else if(view==='sync') render();
-  }catch(e){ setSyncCfg({error:String(e.message||e),status:'error'}); if(!opts.quiet) toast('Sync failed: '+(e.message||e)); if(view==='sync') render(); }
+    if(changedLocal&&view!=='add') render(); else if(view==='sync'||view==='miles'||view==='home') render();
+  }catch(e){ const msg=String(e.message||e); setSyncCfg({error:msg,status:'error'});
+    if(!opts.quiet) toast('Sync failed: '+msg);
+    else if(lastSyncErrToast!==msg){ lastSyncErrToast=msg; toast('⚠️ Sync failed — check More → Sync'); }
+    if(view!=='add') render(); }
   finally{ syncBusy=false; if(syncAgain){ syncAgain=false; setTimeout(()=>syncNow({quiet:true}),500); } }
 }
 function saveSyncForm(){ const v=id=>($('#'+id)||{}).value; const tok=(v('sy_tok')||'').trim();
